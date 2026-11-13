@@ -1,0 +1,868 @@
+{
+  "_note": "Chapter 08 词汇卡内容。ipa = 音标; ex = 例句数组, 顺序与词表中该词出现的行序一致(多词性词给多个例句, 每个例句对应词性行); note = 用法提示/搭配。",
+  "words": {
+    "above": {
+      "ipa": "/əˈbʌv/",
+      "ex": [
+        { "en": "A flock of birds passed above the roof, and nobody in the room looked up.", "cn": "一群鸟从屋顶上空掠过，房间里没有人抬头。", "note": "above 在…上方；above all 首先；over 与…上方（相叠）" }
+      ]
+    },
+    "accuracy": {
+      "ipa": "/ˈækjərəsi/",
+      "ex": [
+        { "en": "The teacher checked the accuracy of the figures before printing them.", "cn": "老师在付印前核对了这些数字的准确性。", "note": "with accuracy 准确地；accuracy in … …方面的准确性" }
+      ]
+    },
+    "adjective": {
+      "ipa": "/ˈædʒɪktɪv/",
+      "ex": [
+        { "en": "\"Cold\" is an adjective, while \"quickly\" is an adverb.", "cn": "表示“冷”的那个词是形容词，而表示“很快地”的那个词是副词。", "note": "an adjective for … …的形容词" }
+      ]
+    },
+    "age": {
+      "ipa": "/eɪdʒ/",
+      "ex": [
+        { "en": "She is still young at the age of twenty-two.", "cn": "她二十二岁，还很年轻。", "note": "at the age of … 在…岁时；the age of … …的时代" },
+        { "en": "She has aged a great deal since we last met.", "cn": "自从上次见面，她老了不少。", "note": "age well 保养得好；be aging 正在变老" }
+      ]
+    },
+    "alphabet": {
+      "ipa": "/ˈælfəbet/",
+      "ex": [
+        { "en": "Children learn the alphabet by singing a simple song.", "cn": "孩子们靠唱一首简单的歌学会了字母表。", "note": "the English alphabet 英语字母表；in alphabetical order 按字母顺序" }
+      ]
+    },
+    "angle": {
+      "ipa": "/ˈæŋɡl/",
+      "ex": [
+        { "en": "He looked at the problem from a different angle.", "cn": "他换一个角度看待这个问题。", "note": "at an angle 斜着；from another angle 从另一个角度；the angle of vision 视角" }
+      ]
+    },
+    "appear": {
+      "ipa": "/əˈpɪə(r)/",
+      "ex": [
+        { "en": "The moon appeared above the ridge, and the wind dropped.", "cn": "月亮出现在山脊上方，风也停了。", "note": "appear to do 似乎；it appears that … 据说" }
+      ]
+    },
+    "army": {
+      "ipa": "/ˈɑːmi/",
+      "ex": [
+        { "en": "The army had to cross the frozen river before the spring thaw.", "cn": "军队必须在春融之前渡过高冰的河。", "note": "an army of 一大群；a great army of workers 大批工人" }
+      ]
+    },
+    "associate": {
+      "ipa": "/əˈsəʊsieɪt/",
+      "ex": [
+        { "en": "People often associate the smell of pine with cold mountain air.", "cn": "人们常把松脂的气味和山中的寒气联系在一起。", "note": "associate A with B 把 A 与 B 联系起来；associate with 与…交往" },
+        { "en": "He works as an associate in a law firm downtown.", "cn": "他在市中心一家律师事务所做合伙人。", "note": "a business associate 生意伙伴；an associate partner 合伙人" },
+        { "en": "She was appointed associate director of the research centre.", "cn": "她被任命为研究中心的副主任。", "note": "associate director 副主任；associate professor 副教授" }
+      ]
+    },
+    "authority": {
+      "ipa": "/ɔːˈθɒrəti/",
+      "ex": [
+        { "en": "The local authority closed the road for repairs.", "cn": "地方政府封闭了这条路进行修缮。", "note": "local authority 地方政府；have authority over 对…有权；a scholar of authority 权威学者" }
+      ]
+    },
+    "ball": {
+      "ipa": "/bɔːl/",
+      "ex": [
+        { "en": "They danced every waltz at the ball until the music stopped.", "cn": "他们一曲接一曲地跳着华尔兹，直到乐队停下。", "note": "a ball 舞会；a ball game 球类运动；have a ball 玩得开心" }
+      ]
+    },
+    "bathroom": {
+      "ipa": "/ˈbɑːθruːm/",
+      "ex": [
+        { "en": "The bathroom window looked out onto the courtyard.", "cn": "卫生间的窗户正对着院子。", "note": "in the bathroom 在浴室里；public bathroom 公共厕所" }
+      ]
+    },
+    "being": {
+      "ipa": "/ˈbiːɪŋ/",
+      "ex": [
+        { "en": "The search for extra-terrestrial beings continues.", "cn": "寻找地外生命的搜寻仍在继续。", "note": "human beings 人类；in being 存在；bring sth. into being 使某物产生" }
+      ]
+    },
+    "bird": {
+      "ipa": "/bɜːd/",
+      "ex": [
+        { "en": "A single bird called from the top of the dead tree.", "cn": "一只孤零零的鸟在枯树顶上鸣叫。", "note": "a bird in the hand 一鸟在手；bird's-eye view 鸟瞰" }
+      ]
+    },
+    "boil": {
+      "ipa": "/bɔɪl/",
+      "ex": [
+        { "en": "Wait until the water boils, then turn down the heat.", "cn": "等水开了，再把火调小。", "note": "boil the water 把水烧开；at a boiling point 达到沸点" }
+      ]
+    },
+    "branch": {
+      "ipa": "/brɑːntʃ/",
+      "ex": [
+        { "en": "He broke a dry branch from the tree to make a fire.", "cn": "他从树上折下一根干树枝来生火。", "note": "a branch of the bank 银行的分行；branch office 分支机构" }
+      ]
+    },
+    "building": {
+      "ipa": "/ˈbɪldɪŋ/",
+      "ex": [
+        { "en": "The old building on the corner was covered in ivy.", "cn": "街角那栋旧楼爬满了常春藤。", "note": "office building 办公楼；the building of … …的建造" }
+      ]
+    },
+    "calculate": {
+      "ipa": "/ˈkælkjuleɪt/",
+      "ex": [
+        { "en": "She calculated the cost of the trip before she agreed to go.", "cn": "在答应去之前，她先算清了这次出行的花费。", "note": "calculate the cost of 估计…的成本；calculate on 指望" }
+      ]
+    },
+    "careless": {
+      "ipa": "/ˈkeələs/",
+      "ex": [
+        { "en": "A careless mistake in the report cost the team a contract.", "cn": "报告里一处粗心的错误让团队丢了一份合同。", "note": "careless about 对…不细心；careless to do 疏忽地做" }
+      ]
+    },
+    "celebrity": {
+      "ipa": "/səˈlebrəti/",
+      "ex": [
+        { "en": "He became a celebrity overnight after the broadcast.", "cn": "那次播出之后，他一夜之间成了名人。", "note": "a media celebrity 媒体名人；celebrity status 名望" }
+      ]
+    },
+    "chart": {
+      "ipa": "/tʃɑːt/",
+      "ex": [
+        { "en": "The teacher drew a chart to show how sales had changed.", "cn": "老师画了一张图表，来说明销售情况的变化。", "note": "a bar chart 柱状图；draw a chart 制图" },
+        { "en": "He charted the temperature every morning for a year.", "cn": "他连续一年每天早上记录气温。", "note": "chart a course 规划航线；chart progress 记录进展" }
+      ]
+    },
+    "choose": {
+      "ipa": "/tʃuːz/",
+      "ex": [
+        { "en": "You may choose either answer, but you must explain your reason.", "cn": "两个答案你可以任选一个，但必须说明理由。", "note": "choose to do 决定做；choose between A and B 在…之间作出选择" }
+      ]
+    },
+    "clear": {
+      "ipa": "/klɪə(r)/",
+      "ex": [
+        { "en": "The sign was not clear, so we asked a local man for help.", "cn": "路牌上的字看不清，我们便向一位当地人问路。", "note": "clear of 远离；in the clear 安全；a clear voice 清晰的声音" },
+        { "en": "Workers cleared the snow from the road before dawn.", "cn": "工人在天亮前把路上的积雪清走了。", "note": "clear the way 扫清道路；clear up 放晴；洗清嫌疑" }
+      ]
+    },
+    "collapse": {
+      "ipa": "/kəˈlæps/",
+      "ex": [
+        { "en": "The old wall collapsed under the weight of the wet snow.", "cn": "湿雪的重量压垮了那道老墙。", "note": "collapse into 瘫倒；the collapse of … …的倒闭" }
+      ]
+    },
+    "communicate": {
+      "ipa": "/kəˈmjuːnɪkeɪt/",
+      "ex": [
+        { "en": "Good teachers communicate ideas clearly, not just facts.", "cn": "好老师传达的是清晰的思想，而不只是事实。", "note": "communicate with 与…交流；communicate sth. to sb. 把…传达给某人" }
+      ]
+    },
+    "compulsory": {
+      "ipa": "/kəmˈpʌlsəri/",
+      "ex": [
+        { "en": "Attendance at the weekly meeting is compulsory for all staff.", "cn": "全体员工都必须参加每周的例会。", "note": "compulsory education 义务教育；make it compulsory to do 强制做" }
+      ]
+    },
+    "congress": {
+      "ipa": "/ˈkɒŋɡres/",
+      "ex": [
+        { "en": "The congress voted to raise the tax on imported goods.", "cn": "代表大会投票决定提高进口商品的税。", "note": "a political congress 党的代表大会；in congress 在开会" }
+      ]
+    },
+    "contain": {
+      "ipa": "/kənˈteɪn/",
+      "ex": [
+        { "en": "This drink contains too much sugar for me.", "cn": "这种饮料含糖太多，我喝不了。", "note": "contain oneself 克制自己；be contained in 包含在…之内" }
+      ]
+    },
+    "cope": {
+      "ipa": "/kəʊp/",
+      "ex": [
+        { "en": "Few students cope well with the pressure of final exams.", "cn": "很少有学生能应付得了期末考试的压力。", "note": "cope with 处理；cope with a difficult situation 应付困难局面" }
+      ]
+    },
+    "courage": {
+      "ipa": "/ˈkʌrɪdʒ/",
+      "ex": [
+        { "en": "It takes courage to admit that you were wrong.", "cn": "承认自己错了需要勇气。", "note": "have the courage to do 有勇气做；courageous 有勇气的" }
+      ]
+    },
+    "criticize/criticise": {
+      "ipa": "/ˈkrɪtɪsaɪz/",
+      "ex": [
+        { "en": "The newspaper criticized the plan for ignoring small farmers.", "cn": "这家报纸批评这项计划忽略了小农户。", "note": "criticize sb. for sth. 因某事批评某人；英式拼写为 criticise" }
+      ]
+    },
+    "custom": {
+      "ipa": "/ˈkʌstəm/",
+      "ex": [
+        { "en": "It is the custom here to exchange small gifts at the new year.", "cn": "在这里，新年时互赠小礼物是习俗。", "note": "by custom 依照惯例；customs office 海关；customs duty 关税" }
+      ]
+    },
+    "dealer": {
+      "ipa": "/ˈdiːlə(r)/",
+      "ex": [
+        { "en": "The dealer offered a lower price for the second-hand car.", "cn": "车行给这辆二手车的报价更低。", "note": "a car dealer 车商；a wholesale dealer 批发商" }
+      ]
+    },
+    "definitely": {
+      "ipa": "/ˈdefɪnətli/",
+      "ex": [
+        { "en": "\"Will you come to the concert?\" \"Definitely,\" she said.", "cn": "“你来听音乐会吗？”“一定来。”她说。", "note": "definitely 是副词，不能直接修饰动词" }
+      ]
+    },
+    "describe": {
+      "ipa": "/dɪˈskraɪb/",
+      "ex": [
+        { "en": "She described the old house in a few careful sentences.", "cn": "她用几个谨慎的句子描述了那座老房子。", "note": "describe sb. as 把某人形容为；describe sth. to sb. 向某人描述" }
+      ]
+    },
+    "dialog/dialogue": {
+      "ipa": "/ˈdaɪəlɒɡ/",
+      "ex": [
+        { "en": "The two ministers exchanged a short dialogue before the meeting.", "cn": "会前两位部长交换了简短的一段对话。", "note": "in dialogue with 与…对话；a dialogue between A and B A 与 B 之间的对话" }
+      ]
+    },
+    "disabled": {
+      "ipa": "/dɪsˈeɪbld/",
+      "ex": [
+        { "en": "The building was designed so that disabled visitors could enter easily.", "cn": "这座建筑设计得很方便残障人士进出。", "note": "the disabled 残疾人（总称）；be disabled from doing 因…而不能做" }
+      ]
+    },
+    "distant": {
+      "ipa": "/ˈdɪstənt/",
+      "ex": [
+        { "en": "The village lay distant in the valley, a faint line of smoke above it.", "cn": "村子远远地落在谷里，屋顶上方浮着一线淡烟。", "note": "distant from 远离；in the distant future 在遥远的将来" }
+      ]
+    },
+    "donkey": {
+      "ipa": "/ˈdɒŋki/",
+      "ex": [
+        { "en": "A donkey pulled the cart slowly up the muddy lane.", "cn": "一头驴拉着车，沿着泥泞的小路慢慢往上走。", "note": "as stubborn as a donkey 像驴一样倔；donkey years 漫长难熬的岁月" }
+      ]
+    },
+    "driver": {
+      "ipa": "/ˈdraɪvə(r)/",
+      "ex": [
+        { "en": "The bus driver waited until everyone had taken a seat.", "cn": "公交司机一直等到所有人都坐下。", "note": "a bus driver 公交司机；a hard disk driver 硬盘驱动器" }
+      ]
+    },
+    "earthquake": {
+      "ipa": "/ˈɜːθkweɪk/",
+      "ex": [
+        { "en": "The earthquake struck at dawn, and the whole village shook.", "cn": "地震在黎明时分袭来，整个村子都在晃动。", "note": "an earthquake hits … 地震袭击…；earthquake damage 震灾损失" }
+      ]
+    },
+    "either": {
+      "ipa": "/ˈaɪðə(r)/",
+      "ex": [
+        { "en": "You can take either bus; they both go to the station.", "cn": "两趟车你随便搭哪一趟都行，它们都到火车站。", "note": "either … or … 或者…或者…；neither … nor … 两者都不" }
+      ]
+    },
+    "emperor": {
+      "ipa": "/ˈempərə(r)/",
+      "ex": [
+        { "en": "The play tells the story of an emperor who fears his own court.", "cn": "这出戏讲的是一位连朝臣都心生畏惧的皇帝。", "note": "the emperor 皇帝；an empress 女王" }
+      ]
+    },
+    "enter": {
+      "ipa": "/ˈentə(r)/",
+      "ex": [
+        { "en": "Please enter your name and student number on the form.", "cn": "请在表格上填上你的姓名和学号。", "note": "enter into 进入（讨论）；enter a competition 参加比赛" }
+      ]
+    },
+    "estimate": {
+      "ipa": "/ˈestɪmeɪt/",
+      "ex": [
+        { "en": "Experts estimate that the repairs will take six months.", "cn": "专家估计修缮要花六个月。", "note": "estimate the cost of 估计…的成本；an estimated 估计的" },
+        { "en": "The repair cost was far above the original estimate.", "cn": "维修费用远远高出了最初的估价。", "note": "at an estimated cost of 估价…；a rough estimate 粗略估计" }
+      ]
+    },
+    "excess": {
+      "ipa": "/ɪkˈses/",
+      "ex": [
+        { "en": "An excess of sugar in the diet is bad for the teeth.", "cn": "饮食中糖分过量对牙齿有害。", "note": "in excess of 超过；an excess of 过多" },
+        { "en": "The airline asked passengers to leave their excess baggage at the gate.", "cn": "航空公司要求乘客把超重行李留在登机口。", "note": "excess baggage 超重行李；excess profit 超额利润" }
+      ]
+    },
+    "explosion": {
+      "ipa": "/ɪkˈspləʊʒn/",
+      "ex": [
+        { "en": "The explosion could be heard three streets away.", "cn": "爆炸声在三条街外都听得见。", "note": "an explosion of anger 突然发怒；an explosion of prices 价格暴涨" }
+      ]
+    },
+    "fairy": {
+      "ipa": "/ˈfeəri/",
+      "ex": [
+        { "en": "In the story, a fairy grants the girl three wishes.", "cn": "故事里，一位仙女给了那女孩三个愿望。", "note": "fairy tale 童话；tooth fairy 牙仙" }
+      ]
+    },
+    "fault": {
+      "ipa": "/fɔːlt/",
+      "ex": [
+        { "en": "The engine stopped because of a fault in the fuel line.", "cn": "发动机熄火了，因为输油管路出了故障。", "note": "at fault 有错；find fault with 挑毛病；a fault in … …的故障" }
+      ]
+    },
+    "fierce": {
+      "ipa": "/fɪəs/",
+      "ex": [
+        { "en": "A fierce wind tore the leaves from the old trees.", "cn": "一阵猛烈的风把老树的叶子扯了下来。", "note": "a fierce storm 猛烈的风暴；fierce competition 激烈的竞争" }
+      ]
+    },
+    "flash": {
+      "ipa": "/flæʃ/",
+      "ex": [
+        { "en": "The camera flashed twice before the shot was finished.", "cn": "照片还没拍完，相机就闪了两下。", "note": "flash across 掠过；flash back to 闪回；flash into 使闪现" },
+        { "en": "There was a flash of lightning, followed by a loud crash of thunder.", "cn": "一道闪电划过，随后是一声震耳的雷鸣。", "note": "in a flash 瞬间；a flash of 一道…；闪光灯 flash" }
+      ]
+    },
+    "foot": {
+      "ipa": "/fʊt/",
+      "ex": [
+        { "en": "The sign at the foot of the hill read: \"No vehicles.\"", "cn": "山脚下的牌子上写着：“禁止车辆通行。”", "note": "at the foot of 在…脚下；on foot 步行；six feet high 六英尺高" }
+      ]
+    },
+    "fountain": {
+      "ipa": "/ˈfaʊntɪn/",
+      "ex": [
+        { "en": "The fountain in the square was frozen solid.", "cn": "广场上的喷泉冻得结结实实。", "note": "a fountain of knowledge 知识的源泉；fountain pen 钢笔" }
+      ]
+    },
+    "fuel": {
+      "ipa": "/ˈfjuːəl/",
+      "ex": [
+        { "en": "The price of fuel has risen again this winter.", "cn": "今年冬天燃料的价格又涨了。", "note": "fuel for thought 思想的动力；run out of fuel 燃料耗尽" },
+        { "en": "Rallying cries fuelled the crowd's anger.", "cn": "呐喊声助长了人群的怒气。", "note": "fuel inflation 加剧通货膨胀；fuel sb.'s ambition 助长某人的野心" }
+      ]
+    },
+    "gate": {
+      "ipa": "/ɡeɪt/",
+      "ex": [
+        { "en": "Please wait at the gate until your number is called.", "cn": "请在门口等候，叫到您的号码再进来。", "note": "the gates of … …的大门；boarding gate 登机口" }
+      ]
+    },
+    "gloomy": {
+      "ipa": "/ˈɡluːmi/",
+      "ex": [
+        { "en": "The sky was grey and gloomy, and the wind had a raw edge.", "cn": "天是灰暗阴沉的，风里带着刀割似的凉意。", "note": "a gloomy outlook 悲观的前景；look gloomy 神情阴郁" }
+      ]
+    },
+    "grain": {
+      "ipa": "/ɡreɪn/",
+      "ex": [
+        { "en": "The finest grain of the wheat is used to make flour.", "cn": "最细的小麦颗粒用来磨面粉。", "note": "a grain of sand 一粒沙；grains of truth 真理的片段" }
+      ]
+    },
+    "grow": {
+      "ipa": "/ɡrəʊ/",
+      "ex": [
+        { "en": "These beans grow quickly in warm, wet soil.", "cn": "这些豆子在温暖湿润的土里长得很快。", "note": "grow into 成长为；grow up 长大；be grown 种植" }
+      ]
+    },
+    "handwriting": {
+      "ipa": "/ˈhændrɪtɪŋ/",
+      "ex": [
+        { "en": "The doctor noted the patient's name in his own handwriting.", "cn": "医生用自己的笔迹记下了病人的名字。", "note": "neat handwriting 工整的字迹；a handwriting sample 笔迹样本" }
+      ]
+    },
+    "health": {
+      "ipa": "/helθ/",
+      "ex": [
+        { "en": "A short walk after dinner is good for your health.", "cn": "晚饭后散一会儿步对健康有好处。", "note": "be in good health 身体健康；health care 医疗保健；public health 公共卫生" }
+      ]
+    },
+    "hide": {
+      "ipa": "/haɪd/",
+      "ex": [
+        { "en": "He tried to hide his fear of the examination.", "cn": "他试图掩饰自己对考试的害怕。", "note": "hide sth. from sb. 把某事瞒着某人；hide behind 躲在…后面" },
+        { "en": "The old chair was covered with the hide of a deer.", "cn": "那把旧椅子上蒙着一层鹿皮。", "note": "hide 兽皮（不可数）；hides 皮革（复数）" }
+      ]
+    },
+    "hook": {
+      "ipa": "/hʊk/",
+      "ex": [
+        { "en": "He hung his coat on a hook behind the door.", "cn": "他把外套挂在门后的钩子上。", "note": "by the hook 碰巧；hook and line 钓鱼" },
+        { "en": "The title of the book hooked me from the very first page.", "cn": "这本书的书名从第一页就把我吸引住了。", "note": "be hooked on 对…上瘾；hook up 连接" }
+      ]
+    },
+    "hunger": {
+      "ipa": "/ˈhʌŋɡə(r)/",
+      "ex": [
+        { "en": "Hunger drove him to work three days without food.", "cn": "饥饿驱使着他三天没吃一口东西地干活。", "note": "hunger for 对…的渴望；satisfy hunger 消除饥饿" }
+      ]
+    },
+    "imagine": {
+      "ipa": "/ɪˈmædʒɪn/",
+      "ex": [
+        { "en": "Imagine living by the sea with no telephone in sight.", "cn": "想象一下住在海边、眼前连一部电话都没有的日子。", "note": "imagine doing 想象做；imagine sb. to be 想象某人是…" }
+      ]
+    },
+    "increase": {
+      "ipa": "/ɪnˈkriːs/",
+      "ex": [
+        { "en": "The number of online shoppers has increased sharply in recent years.", "cn": "网购人数近年来急剧增加。", "note": "an increase in … …的增长；increase by 增加了" }
+      ]
+    },
+    "initial": {
+      "ipa": "/ɪˈnɪʃl/",
+      "ex": [
+        { "en": "My initial reaction to the offer was plain surprise.", "cn": "我对这个提议的第一反应是惊讶。", "note": "initial impression 初步印象；initial letter 首字母" },
+        { "en": "Please write your initials in the top corner of the form.", "cn": "请把你的姓名首字母写在表格右上角。", "note": "the initials of … …的首字母" }
+      ]
+    },
+    "insurance": {
+      "ipa": "/ɪnˈʃʊərəns/",
+      "ex": [
+        { "en": "Farmers in this region pay heavy insurance on their crops.", "cn": "这个地区的农民为农作物要缴很高的保险费。", "note": "health insurance 医疗保险；take out insurance 投保" }
+      ]
+    },
+    "invest": {
+      "ipa": "/ɪnˈvest/",
+      "ex": [
+        { "en": "The company plans to invest heavily in new research.", "cn": "公司打算在新研究上投入巨资。", "note": "invest in 投资于；invest time in 把时间投入" }
+      ]
+    },
+    "join": {
+      "ipa": "/dʒɔɪn/",
+      "ex": [
+        { "en": "Several classmates joined us at the station.", "cn": "有几个同学在车站跟我们汇合。", "note": "join in 参加（活动）；join hands 手拉手；join A to B 把 A 与 B 连接" }
+      ]
+    },
+    "kind": {
+      "ipa": "/kaɪnd/",
+      "ex": [
+        { "en": "What kind of music do you listen to on the way to work?", "cn": "你上班路上听什么类型的音乐？", "note": "a kind of 一种；this kind of 这类；kind of 有点儿" },
+        { "en": "It was kind of her to wait until I had finished.", "cn": "她一直等到我做完，真是好心。", "note": "be kind to sb. 对某人友善；It's kind of you to … 谢谢你…" }
+      ]
+    },
+    "lantern": {
+      "ipa": "/ˈlæntən/",
+      "ex": [
+        { "en": "Red lanterns hung along the street for the festival.", "cn": "为了过节，街上挂起了红灯笼。", "note": "a paper lantern 纸灯笼；lantern light 灯光" }
+      ]
+    },
+    "learn": {
+      "ipa": "/lɜːn/",
+      "ex": [
+        { "en": "He learned from the newspaper that the road was closed.", "cn": "他从报纸上得知那条路封了。", "note": "learn of/about 听说；learn to do 学会做" }
+      ]
+    },
+    "lie": {
+      "ipa": "/laɪ/",
+      "ex": [
+        { "en": "The old book lies open on the desk where he left it.", "cn": "那本旧书摊开放在他离开时的书桌上。", "note": "lie about 撒谎；lie in 在于；lie on 位于…上" },
+        { "en": "He realized that the story he had heard was a complete lie.", "cn": "他意识到自己听来的那个故事完全是个谎言。", "note": "tell a lie 撒谎；a white lie 善意的谎言" }
+      ]
+    },
+    "loaf": {
+      "ipa": "/ləʊf/",
+      "ex": [
+        { "en": "She bought a loaf of bread and a jar of jam.", "cn": "她买了一条面包和一瓶果酱。", "note": "a loaf of bread 一条面包；half a loaf 半条面包" }
+      ]
+    },
+    "luck": {
+      "ipa": "/lʌk/",
+      "ex": [
+        { "en": "Good luck with the exam; I am sure you will do well.", "cn": "祝你考试顺利，我相信你一定考得好。", "note": "good luck with 在…上祝好运；try one's luck 碰运气" }
+      ]
+    },
+    "management": {
+      "ipa": "/ˈmænɪdʒmənt/",
+      "ex": [
+        { "en": "The company changed its management last spring.", "cn": "公司去年春天更换了管理层。", "note": "under the management of 在…的管理下；management training 管理培训" }
+      ]
+    },
+    "may": {
+      "ipa": "/meɪ/",
+      "ex": [
+        { "en": "\"May you have a long and happy life,\" she said to the old man.", "cn": "她对老人说：“愿您长命百岁。”", "note": "may well 很可能；May I …? 我可以…吗？" }
+      ]
+    },
+    "merchant": {
+      "ipa": "/ˈmɜːtʃənt/",
+      "ex": [
+        { "en": "The merchant weighed the grain and paid in cash.", "cn": "商人称了谷物的分量，用现金付了钱。", "note": "a wine merchant 酒商；a merchant ship 商船" }
+      ]
+    },
+    "minority": {
+      "ipa": "/maɪˈnɒrəti/",
+      "ex": [
+        { "en": "Only a small minority of the students failed the test.", "cn": "只有少数学生没通过考试。", "note": "a minority of … …的少数；be in the minority 处于少数地位" }
+      ]
+    },
+    "monthly": {
+      "ipa": "/ˈmʌnθli/",
+      "ex": [
+        { "en": "The club meets once a month to review the monthly plan.", "cn": "俱乐部每月碰一次头，检查当月的计划。", "note": "monthly report 月报；monthly rent 月租" },
+        { "en": "The fee is paid monthly rather than in one lump sum.", "cn": "这笔费用按月支付，而不是一次付清。", "note": "pay monthly 按月付款；twice monthly 每月两次" },
+        { "en": "The magazine is a well-known monthly on modern art.", "cn": "这本杂志是一份知名的现代艺术月刊。", "note": "a monthly magazine 月刊；an academic monthly 学术月刊" }
+      ]
+    },
+    "murder": {
+      "ipa": "/ˈmɜːdə(r)/",
+      "ex": [
+        { "en": "The police believed that the clerk had been murdered.", "cn": "警方相信那名职员是被谋杀的。", "note": "murder sb. 谋杀某人；a murder case 谋杀案" }
+      ]
+    },
+    "neat": {
+      "ipa": "/niːt/",
+      "ex": [
+        { "en": "She wrote a neat summary of the long report.", "cn": "她把那份长报告写成了一份简洁明了的摘要。", "note": "neat and tidy 整洁；a neat solution 巧妙的办法" }
+      ]
+    },
+    "nightmare": {
+      "ipa": "/ˈnaɪtmeə(r)/",
+      "ex": [
+        { "en": "The final exam was a nightmare for most of the class.", "cn": "期末考试对班上大多数人来说是一场噩梦。", "note": "a nightmare scenario 最坏的情况；have a nightmare 做噩梦" }
+      ]
+    },
+    "novel": {
+      "ipa": "/ˈnɒvl/",
+      "ex": [
+        { "en": "He finished his first novel while he was still a student.", "cn": "他还在当学生时就写完了自己的第一部小说。", "note": "a historical novel 历史小说；in the novel 在小说中" },
+        { "en": "The team came up with a novel way of storing old books.", "cn": "这个团队想出了一个存放旧书的新奇办法。", "note": "a novel idea 新奇的想法；novel design 新颖的设计" }
+      ]
+    },
+    "occur": {
+      "ipa": "/əˈkɜː(r)/",
+      "ex": [
+        { "en": "It never occurred to him that the shop was already closed.", "cn": "他压根儿没想到那家店已经关门了。", "note": "occur to sb. 某人想到；an accident occurred 事故发生了" }
+      ]
+    },
+    "operate": {
+      "ipa": "/ˈɒpəreɪt/",
+      "ex": [
+        { "en": "She can operate the machine, but she has never repaired it.", "cn": "这台机器她会操作，却从没拆修过。", "note": "operate on a patient 给病人做手术；operate a business 经营生意" }
+      ]
+    },
+    "ours": {
+      "ipa": "/ˈaʊəz/",
+      "ex": [
+        { "en": "Theirs is smaller, but ours is cheaper.", "cn": "他们那个更小，不过我们的更便宜。", "note": "ourselves 我们自己；of our own 我们自己的" }
+      ]
+    },
+    "pace": {
+      "ipa": "/peɪs/",
+      "ex": [
+        { "en": "He set off at a slow pace, watching the fields.", "cn": "他迈着慢步出发，一路看着田野。", "note": "at a fast pace 快速地；keep pace with 跟上" },
+        { "en": "She paced up and down the corridor, waiting for news.", "cn": "她在走廊里来回踱步，等着消息。", "note": "pace oneself 控制自己的节奏；pace the horse 控制马速" }
+      ]
+    },
+    "partial": {
+      "ipa": "/ˈpɑːʃl/",
+      "ex": [
+        { "en": "The lecture was only a partial explanation of the theory.", "cn": "那次讲座只是对这一理论作了部分解释。", "note": "be partial to 对…偏爱；a partial success 部分成功" }
+      ]
+    },
+    "peach": {
+      "ipa": "/piːtʃ/",
+      "ex": [
+        { "en": "A basket of peaches sat on the kitchen table.", "cn": "厨房桌上放着一篮桃子。", "note": "a peach of a thing 好极的东西；peach blossom 桃花" }
+      ]
+    },
+    "personality": {
+      "ipa": "/ˌpɜːsəˈnæləti/",
+      "ex": [
+        { "en": "Her calm personality won the trust of the villagers.", "cn": "她沉静的个性赢得了乡亲们的信任。", "note": "a strong personality 强烈的个性；a television personality 电视名人" }
+      ]
+    },
+    "pillar": {
+      "ipa": "/ˈpɪlə(r)/",
+      "ex": [
+        { "en": "Two stone pillars marked the entrance to the old hall.", "cn": "两根石柱标示着老礼堂的入口。", "note": "a pillar of society 社会中坚；a pillar of support 支柱" }
+      ]
+    },
+    "plunge": {
+      "ipa": "/plʌndʒ/",
+      "ex": [
+        { "en": "He plunged his hands into the cold water and pulled the rope.", "cn": "他双手探进冰冷的水里，一把抓住了绳子。", "note": "plunge into 跳入；投入；plunge into darkness 陷入黑暗" }
+      ]
+    },
+    "pork": {
+      "ipa": "/pɔːk/",
+      "ex": [
+        { "en": "The village ate pork and dumplings on the eve of the festival.", "cn": "过节前夕，全村人吃猪肉和饺子。", "note": "pork chop 猪排；roast pork 烤猪肉" }
+      ]
+    },
+    "practice/practise": {
+      "ipa": "/ˈpræktɪs/",
+      "ex": [
+        { "en": "Regular practice makes good English listening possible.", "cn": "经常练习才能练出好的英语听力。", "note": "in practice 实际上；practice doing 练习做" }
+      ]
+    },
+    "priest": {
+      "ipa": "/priːst/",
+      "ex": [
+        { "en": "The village priest blessed the new school at the ceremony.", "cn": "村里的神父在典礼上为新学校祝福。", "note": "a Catholic priest 天主教神父；the high priest 祭司长" }
+      ]
+    },
+    "profit": {
+      "ipa": "/ˈprɒfɪt/",
+      "ex": [
+        { "en": "The shop made little profit during the winter months.", "cn": "这家店在冬季的几个月里利润很薄。", "note": "make a profit 盈利；profit from 从…中获利" },
+        { "en": "Both sides profited from the deal, though neither said so.", "cn": "双方都从这笔交易中得了利，尽管谁也没说。", "note": "profit from 从…中获益；profit by 因…而获益" }
+      ]
+    },
+    "psychological": {
+      "ipa": "/ˌsaɪkəˈlɒdʒɪkl/",
+      "ex": [
+        { "en": "The film is a careful psychological study of a lonely man.", "cn": "这部电影是对一个孤独者的心理剖析，写得很细致。", "note": "psychological stress 心理压力；psychological warfare 心理战" }
+      ]
+    },
+    "queen": {
+      "ipa": "/kwiːn/",
+      "ex": [
+        { "en": "In the legend, the queen hides the key under the stone.", "cn": "传说中，王后把钥匙藏在石头下面。", "note": "the queen consort 王后；queen bee 蜂王" }
+      ]
+    },
+    "rather": {
+      "ipa": "/ˈrɑːðə(r)/",
+      "ex": [
+        { "en": "The path was rather rough, and his shoes soon filled with mud.", "cn": "那条路相当难走，他的鞋很快就灌满了泥。", "note": "would rather 宁愿；rather than 而不是；or rather 更确切地说" }
+      ]
+    },
+    "recognize/recognise": {
+      "ipa": "/ˈrekəɡnaɪz/",
+      "ex": [
+        { "en": "I didn't recognize you with your hair cut short.", "cn": "你把头发剪短了，我都没认出你来。", "note": "recognize sb. by … 通过…认出某人；recognize that … 承认…；英式拼写为 recognise" }
+      ]
+    },
+    "regulate": {
+      "ipa": "/ˈreɡjuleɪt/",
+      "ex": [
+        { "en": "The law is meant to regulate the hours banks may stay open.", "cn": "这项法律旨在规定银行可以开门的时间。", "note": "regulate trade 调控贸易；regulate temperature 调节温度" }
+      ]
+    },
+    "repair": {
+      "ipa": "/rɪˈpeə(r)/",
+      "ex": [
+        { "en": "It will cost more to repair the roof than to replace it.", "cn": "修屋顶的钱比换掉它还多。", "note": "under repair 在维修中；repair the damage 弥补损失" }
+      ]
+    },
+    "respect": {
+      "ipa": "/rɪˈspekt/",
+      "ex": [
+        { "en": "His father earned the respect of every man in the village.", "cn": "他父亲赢得了村里每一个人的尊重。", "note": "respect sb.'s wishes 尊重某人的意愿；with respect to 关于" },
+        { "en": "In this respect, the two villages are hard to tell apart.", "cn": "在这方面，两个村子几乎难以分辨。", "note": "in this respect 在这方面；with respect to 关于" }
+      ]
+    },
+    "ride": {
+      "ipa": "/raɪd/",
+      "ex": [
+        { "en": "He rode the bus to the station and walked the rest of the way.", "cn": "他坐公交到车站，剩下的路步行走完。", "note": "ride a horse 骑马；ride a bus 乘公交" },
+        { "en": "The ride from the station to the village took half an hour.", "cn": "从车站到村子里那趟车要坐半个小时。", "note": "a bus ride 乘车；a short ride 短途旅行" }
+      ]
+    },
+    "rough": {
+      "ipa": "/rʌf/",
+      "ex": [
+        { "en": "We took a rough path through the woods to avoid the main road.", "cn": "我们走了一条穿过林子的难走的路，避开大路。", "note": "rough estimate 粗略估计；a rough draft 草稿；rough treatment 粗暴对待" }
+      ]
+    },
+    "salary": {
+      "ipa": "/ˈsæləri/",
+      "ex": [
+        { "en": "He earns a modest salary as an assistant at the clinic.", "cn": "他在诊所当助手，挣一份不算高的工资。", "note": "monthly salary 月薪；a salary increase 涨工资" }
+      ]
+    },
+    "scenery": {
+      "ipa": "/ˈsiːnəri/",
+      "ex": [
+        { "en": "From the top of the hill the scenery is magnificent.", "cn": "从山顶望去，风景壮丽。", "note": "natural scenery 自然风光；scenery 是不可数名词" }
+      ]
+    },
+    "sector": {
+      "ipa": "/ˈsektə(r)/",
+      "ex": [
+        { "en": "The service sector now employs more people than the farms do.", "cn": "服务业现在雇用的人比农业还多。", "note": "the private sector 私营部门；a sector of the economy 经济的某个部门" }
+      ]
+    },
+    "session": {
+      "ipa": "/ˈseʃn/",
+      "ex": [
+        { "en": "The training sessions are held twice a week in the hall.", "cn": "培训课每周在礼堂举行两次。", "note": "a training session 培训课；in session 正在开会" }
+      ]
+    },
+    "shine": {
+      "ipa": "/ʃaɪn/",
+      "ex": [
+        { "en": "The moon shines on the snow, and the whole street turns white.", "cn": "月光照在雪上，整条街都变得煞白。", "note": "shine in 表现出色；the sun shines 阳光照耀" }
+      ]
+    },
+    "signature": {
+      "ipa": "/ˈsɪɡnətʃə(r)/",
+      "ex": [
+        { "en": "The teacher collected the signatures of all the parents.", "cn": "老师收齐了所有家长的签名。", "note": "put one's signature to 在…上签名；a signature dish 拿手菜" }
+      ]
+    },
+    "ski": {
+      "ipa": "/skiː/",
+      "ex": [
+        { "en": "Every winter the children learn to ski on the frozen lake.", "cn": "每年冬天孩子们都在结冰的湖上学滑雪。", "note": "ski resort 滑雪胜地；go skiing 去滑雪" },
+        { "en": "He rented a pair of skis for the whole week.", "cn": "他租了一整周的滑雪板。", "note": "a pair of skis 一双滑雪板；ski boots 滑雪靴" }
+      ]
+    },
+    "snap": {
+      "ipa": "/snæp/",
+      "ex": [
+        { "en": "He snapped a photograph of the whole family before dinner.", "cn": "晚饭前，他给全家人拍了一张照片。", "note": "snap at sb. 对某人厉声说话；snap a photo 快速拍照" },
+        { "en": "She showed me a snap of the two of them at the gate.", "cn": "她给我看了一张他们在门口的照片。", "note": "in a snap 立刻；a quick snap 快照" }
+      ]
+    },
+    "somewhere": {
+      "ipa": "/ˈsʌmweə(r)/",
+      "ex": [
+        { "en": "I left my notebook somewhere between the library and the hall.", "cn": "我把笔记本丢在图书馆和礼堂之间的什么地方了。", "note": "somewhere else 别处；somewhere around 大约在" }
+      ]
+    },
+    "specifically": {
+      "ipa": "/spəˈsɪfɪkli/",
+      "ex": [
+        { "en": "She was not complaining about the noise, but specifically about the late hours.", "cn": "她抱怨的不是噪音，而具体是那些太晚的时辰。", "note": "more specifically 更具体地说；specifically speaking 具体来说" }
+      ]
+    },
+    "spring": {
+      "ipa": "/sprɪŋ/",
+      "ex": [
+        { "en": "By spring, the fields were green and the streams were loud again.", "cn": "到了春天，田野绿了，溪水又响了起来。", "note": "in spring 在春天；spring water 泉水；a metal spring 金属弹簧" },
+        { "en": "New plans began to spring up after the discussion ended.", "cn": "讨论结束后，新的计划开始冒出来。", "note": "spring up 涌现；spring to one's feet 一跃而起" }
+      ]
+    },
+    "steel": {
+      "ipa": "/stiːl/",
+      "ex": [
+        { "en": "The tools in his workshop are all made of steel.", "cn": "他作坊里的工具全是钢制的。", "note": "steel industry 钢铁工业；steely 钢铁般的" }
+      ]
+    },
+    "straw": {
+      "ipa": "/strɔː/",
+      "ex": [
+        { "en": "She drank the cold juice through a paper straw.", "cn": "她用纸吸管喝着冰凉的果汁。", "note": "a straw hat 草帽；drink through a straw 用吸管喝" }
+      ]
+    },
+    "suburb": {
+      "ipa": "/ˈsʌbɜːb/",
+      "ex": [
+        { "en": "They moved to a quiet suburb to escape the noise of the city.", "cn": "他们搬到安静的郊区，躲开城市的喧闹。", "note": "in the suburbs 在郊区；a residential suburb 住宅区" }
+      ]
+    },
+    "superb": {
+      "ipa": "/suːˈpɜːb/",
+      "ex": [
+        { "en": "The view from the ridge was superb, and no one spoke for a while.", "cn": "山脊上的景色极好，一时间谁也没说话。", "note": "superb scenery 绝妙的风景；a superb performance 出色的演出" }
+      ]
+    },
+    "sweet": {
+      "ipa": "/swiːt/",
+      "ex": [
+        { "en": "Her voice was so sweet that the whole hall fell silent.", "cn": "她的声音如此悦耳，整个大厅都静了下来。", "note": "a sweet voice 悦耳的嗓音；sweet dreams 做个好梦" },
+        { "en": "The old man kept a jar of sweets on the shelf.", "cn": "老人在架子上放着一罐糖果。", "note": "a bag of sweets 一袋糖果；sweets 甜点（复数）" }
+      ]
+    },
+    "tax": {
+      "ipa": "/tæks/",
+      "ex": [
+        { "en": "The government raised the tax on imported oil last year.", "cn": "政府去年提高了进口石油的税。", "note": "pay taxes 纳税；a tax on sth. 某物的税；a tax on sb.'s nerves 神经负担" },
+        { "en": "The new rule taxes small shops more heavily than large ones.", "cn": "新规定对小店的征税比大店重。", "note": "tax sb. sth. 对某人某物征税；be taxed with 承受着…的重担" }
+      ]
+    },
+    "term": {
+      "ipa": "/tɜːm/",
+      "ex": [
+        { "en": "The final term of the year is the busiest one.", "cn": "一年中最后一个学期是最忙的。", "note": "in terms of 就…而言；a term of office 任期" }
+      ]
+    },
+    "thick": {
+      "ipa": "/θɪk/",
+      "ex": [
+        { "en": "The snow was so thick that the doors would not open.", "cn": "雪太厚了，门都推不开。", "note": "thick soup 浓汤；through thick and thin 不顾艰难" }
+      ]
+    },
+    "thus": {
+      "ipa": "/ðʌs/",
+      "ex": [
+        { "en": "He studied the map for a long time and thus found the right path.", "cn": "他对着地图看了很久，就这样找到了那条正确的路。", "note": "thus far 迄今为止；thus 因此" }
+      ]
+    },
+    "tomorrow": {
+      "ipa": "/təˈmɒrəʊ/",
+      "ex": [
+        { "en": "Tomorrow the whole village will gather at the hall.", "cn": "明天，全村人都会聚集在大礼堂。", "note": "the day after tomorrow 后天；tomorrow morning 明天早上" }
+      ]
+    },
+    "train": {
+      "ipa": "/treɪn/",
+      "ex": [
+        { "en": "The early train leaves the city at six in the morning.", "cn": "清早那班火车六点离开城市。", "note": "by train 乘火车；a train of thought 一连串想法" },
+        { "en": "New staff are trained for two weeks before they work alone.", "cn": "新员工先培训两周，然后才能独立上岗。", "note": "train sb. to do 训练某人做；train for a race 为比赛训练" }
+      ]
+    },
+    "troop": {
+      "ipa": "/truːp/",
+      "ex": [
+        { "en": "A troop of children ran out of the classroom at once.", "cn": "一群孩子立刻从教室里跑了出去。", "note": "a troop of 一群；a troop of horses 一群马" }
+      ]
+    },
+    "ultimate": {
+      "ipa": "/ˈʌltɪmət/",
+      "ex": [
+        { "en": "The ultimate aim of the course is to write clearly.", "cn": "这门课的最终目的，是把话写清楚。", "note": "the ultimate goal 最终目标；ultimate reality 根本的现实" }
+      ]
+    },
+    "unlikely": {
+      "ipa": "/ʌnˈlaɪkli/",
+      "ex": [
+        { "en": "It is unlikely that the storm will reach the coast tonight.", "cn": "暴风雨今晚到达海岸的可能性不大。", "note": "unlikely to do 不太可能做；it is unlikely that … …不太可能" }
+      ]
+    },
+    "vain": {
+      "ipa": "/veɪn/",
+      "ex": [
+        { "en": "All the talk about fixing the road by Friday was in vain.", "cn": "关于周五之前修好那条路的一番话全是白说。", "note": "in vain 徒劳；vain effort 白费力气；be vain about 自负" }
+      ]
+    },
+    "village": {
+      "ipa": "/ˈvɪlɪdʒ/",
+      "ex": [
+        { "en": "The village has one shop, one school and a hundred houses.", "cn": "这个村子有一家商店、一所学校和一百户人家。", "note": "village life 乡村生活；the whole village 全村" }
+      ]
+    },
+    "wage": {
+      "ipa": "/weɪdʒ/",
+      "ex": [
+        { "en": "The dock workers asked for a higher wage after the freeze.", "cn": "码头工人在冰冻之后要求更高的工资。", "note": "a day's wage 一天的工钱；the wage of a day 日薪" },
+        { "en": "The two sides waged a long and bitter argument over the plan.", "cn": "双方就这个方案展开了一场漫长而激烈的争论。", "note": "wage a campaign 发起一场运动；wage war on 对…发动战争" }
+      ]
+    },
+    "wear": {
+      "ipa": "/weə(r)/",
+      "ex": [
+        { "en": "He was wearing a thick coat and gloves against the cold.", "cn": "他穿着厚大衣，戴着手套抵御寒冷。", "note": "wear out 用坏；wear one's heart on one's sleeve 毫不掩饰" },
+        { "en": "Winter wear is sold at half price after the festival.", "cn": "过节之后，冬季服装半价出售。", "note": "everyday wear 日常穿着；show wear 有磨损" }
+      ]
+    },
+    "whereas": {
+      "ipa": "/ˌweərˈæz/",
+      "ex": [
+        { "en": "She enjoys city life, whereas her brother prefers the country.", "cn": "她喜欢城市生活，而她哥哥更愿意待在乡下。", "note": "whereas 表对比；作“鉴于”讲时相当于 since" }
+      ]
+    },
+    "wing": {
+      "ipa": "/wɪŋ/",
+      "ex": [
+        { "en": "A bird with a broken wing hopped along the fence.", "cn": "一只翅膀受伤的鸟沿着篱笆一蹦一跳地走。", "note": "the left wing 左翼；on the wing 在飞行中" }
+      ]
+    },
+    "worship": {
+      "ipa": "/ˈwɜːʃɪp/",
+      "ex": [
+        { "en": "Every year the villagers come here to worship at the temple.", "cn": "每年村民们都来这里在庙里烧香。", "note": "worship God 崇拜上帝；a place of worship 礼拜场所" }
+      ]
+    },
+    "your": {
+      "ipa": "/jɔː(r)/",
+      "ex": [
+        { "en": "I hope your holiday brings you rest and good luck.", "cn": "希望你的假期给你带来休息和好运。", "note": "your 你的/你们的；yours 你的（东西）" }
+      ]
+    }
+  }
+}

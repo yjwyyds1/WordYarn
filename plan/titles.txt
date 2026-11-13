@@ -1,0 +1,30 @@
+01 | The Arrival | 初到海州 | 火车上相识、入住宿舍
+02 | Orientation | 开学典礼 | 开学典礼、图书馆、选课
+03 | Classes and Clubs | 课堂与社团 | 各科课堂、英语社、足球
+04 | First Month | 第一个月 | 生病、理财、家教
+05 | Downtown | 逛市区 | 老城、港口、婚礼
+06 | Club Fair | 社团招新 | 招新、计算机社、写给奶奶的信
+07 | First Exams | 期末考试 | 备考、图书馆、考试周
+08 | Winter Home | 寒假回家 | 回家、雪、春节
+09 | Spring Meet | 春季运动会 | 训练、比赛、受伤
+10 | Science Fair | 科技节 | 组队、实验室、获奖
+11 | The Lab | 实验室 | 暑期科研、神秘错误、实地调研
+12 | Green Volunteers | 海岸志愿 | 清理海滩、水样检测、乡村小学
+13 | Journey West | 西行之旅 | 火车、徒步、古堡、山村
+14 | Summer Internship | 暑期实习 | 北京、公司、调试、告别
+15 | Startup: Shelf | 创业·书架 | 路演、冷启动、增长停滞
+16 | The Pivot | 创业·转型 | 转型、比赛、传承
+17 | The Rumor | 谣言事件 | 论坛谣言、调查、真相
+18 | The Newsroom | 校报编辑部 | 专访、圣诞特刊、主编卸任
+19 | Health and Sports | 健康与体检 | 康复、体检、慈善跑
+20 | The Scam | 诈骗风波 | 钓鱼邮件、账户、恐慌
+21 | Security Class | 安全课堂 | 讲座、密码、防护
+22 | Spring Festival | 春节文化周 | 留校、包饺子、灯会
+23 | The Museum | 博物馆 | 历史课作业、青铜针、观展
+24 | Museum Guide | 讲解员 | 儿童项目、春季特展
+25 | Love and Growth | 爱与成长 | 告白、恋爱、奶奶生病
+26 | Homeward | 回乡 | 陪护、村庄、康复
+27 | Thesis and Jobs | 论文与求职 | 论文、面试、选择
+28 | Graduation | 毕业 | 最后的日子、典礼
+29 | First Year at Work | 工作的第一年 | 城市、公司、周五的饭桌
+30 | Epilogue | 周年与终章 | 回访母校、周年聚会、尾声

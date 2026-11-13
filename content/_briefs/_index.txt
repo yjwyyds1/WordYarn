@@ -1,0 +1,30 @@
+ch01.md  The Arrival / 初到海州  句74 词条176
+ch02.md  Orientation / 开学典礼  句72 词条165
+ch03.md  Classes and Clubs / 课堂与社团  句117 词条170
+ch04.md  First Month / 第一个月  句118 词条161
+ch05.md  Downtown / 逛市区  句106 词条170
+ch06.md  Club Fair / 社团招新  句106 词条169
+ch07.md  First Exams / 期末考试  句121 词条169
+ch08.md  Winter Home / 寒假回家  句108 词条168
+ch09.md  Spring Meet / 春季运动会  句104 词条168
+ch10.md  Science Fair / 科技节  句112 词条166
+ch11.md  The Lab / 实验室  句116 词条164
+ch12.md  Green Volunteers / 海岸志愿  句101 词条175
+ch13.md  Journey West / 西行之旅  句117 词条168
+ch14.md  Summer Internship / 暑期实习  句99 词条177
+ch15.md  Startup: Shelf / 创业·书架  句85 词条167
+ch16.md  The Pivot / 创业·转型  句85 词条177
+ch17.md  The Rumor / 谣言事件  句93 词条160
+ch18.md  The Newsroom / 校报编辑部  句90 词条169
+ch19.md  Health and Sports / 健康与体检  句93 词条171
+ch20.md  The Scam / 诈骗风波  句99 词条170
+ch21.md  Security Class / 安全课堂  句99 词条164
+ch22.md  Spring Festival / 春节文化周  句94 词条172
+ch23.md  The Museum / 博物馆  句100 词条165
+ch24.md  Museum Guide / 讲解员  句107 词条164
+ch25.md  Love and Growth / 爱与成长  句118 词条173
+ch26.md  Homeward / 回乡  句92 词条184
+ch27.md  Thesis and Jobs / 论文与求职  句102 词条169
+ch28.md  Graduation / 毕业  句113 词条160
+ch29.md  First Year at Work / 工作的第一年  句97 词条168
+ch30.md  Epilogue / 周年与终章  句94 词条162

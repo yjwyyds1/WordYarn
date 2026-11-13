@@ -1,0 +1,6 @@
+Could not find platform independent libraries <prefix>
+total unique words: 4154
+total rows: 5061
+first: abandon | last: zoo
+chunk sizes: [139, 139, 139, 139, 139, 139, 139, 139, 139, 139, 139, 139, 139, 139, 138, 138, 138, 138, 138, 138, 138, 138, 138, 138, 138, 138, 138, 138, 138, 138] sum: 4154
+chunks written to D:\CET4\plan

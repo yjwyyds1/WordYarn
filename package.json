@@ -1,0 +1,13 @@
+{
+  "name": "wordyarn",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WordYarn — learn CET-4 vocabulary through 30 continuous stories",
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build_site_data.mjs",
+    "start": "node tools/serve.mjs 8848",
+    "shot": "powershell -ExecutionPolicy Bypass -File tools/shot.ps1",
+    "check": "node tools/build_site_data.mjs"
+  }
+}

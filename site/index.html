@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="paper">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>词汇故事集 · 精读与背词</title>
+<meta name="description" content="四级词汇故事集：逐句中英对照精读 + 目标词造句 + 闪卡自测">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="topbar">
+  <button class="nav-toggle" id="btnNav" title="目录" aria-label="展开目录">
+    <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
+      <rect x="2.5" y="3.5" width="15" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+      <line x1="7.5" y1="3.5" x2="7.5" y2="16.5" stroke="currentColor" stroke-width="1.4"/>
+    </svg>
+  </button>
+
+  <div class="seal" id="seal" title="当前章节"><span id="sealChar">壹</span></div>
+
+  <div class="brand">
+    <div class="brand-cn">词汇故事集</div>
+    <div class="brand-en">Stories for CET&#8209;4 Vocabulary</div>
+  </div>
+
+  <div class="brand-sep" aria-hidden="true"></div>
+
+  <div class="now">
+    <div class="now-title" id="nowTitle">The Arrival</div>
+    <div class="now-sub" id="nowSub">初到海州</div>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="视图">
+    <button class="tab" role="tab" data-view="today" aria-selected="false">今日</button>
+    <button class="tab is-active" role="tab" data-view="read" aria-selected="true">精读</button>
+    <button class="tab" role="tab" data-view="vocab" aria-selected="false">词表</button>
+    <button class="tab" role="tab" data-view="cards" aria-selected="false">闪卡</button>
+    <button class="tab" role="tab" data-view="dictionary" aria-selected="false">查词</button>
+  </nav>
+
+  <div class="tools">
+    <button class="tool" id="btnSmaller" title="缩小字号" aria-label="A− 缩小字号">A<span class="tool-sm">−</span></button>
+    <button class="tool" id="btnBigger" title="放大字号" aria-label="A+ 放大字号">A<span class="tool-sm">+</span></button>
+    <button class="tool" id="btnTheme" title="切换昼夜" aria-label="夜 切换昼夜"><span id="themeChar">夜</span></button>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head">
+      <span class="side-title">目录</span>
+      <span class="side-count" id="sideCount"></span>
+    </div>
+    <div class="side-scroll">
+      <ol class="ch-list" id="chList"></ol>
+      <div class="side-rail" aria-hidden="true"><i id="sideRail"></i></div>
+    </div>
+    <div class="side-foot">
+      <div class="legend"><i class="dot dot-known"></i>掌握</div>
+      <div class="legend"><i class="dot dot-fuzzy"></i>模糊</div>
+      <div class="legend"><i class="dot dot-new"></i>生疏</div>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <section class="view study-view" id="view-today" aria-label="今日学习" hidden>
+      <header class="study-heading"><div class="kicker">THE READING ROOM</div><h1>今天学什么</h1><p>读一段故事，记住几个词。</p></header>
+      <div class="study-grid">
+        <article class="study-panel"><span class="study-index">01 / 阅读</span><h2>接着读故事</h2><p id="continueDetail"></p><button id="continueStudy" class="btn primary-study">开始阅读</button></article>
+        <article class="study-panel"><span class="study-index">02 / 复习</span><h2><span id="dueCount">0</span> 个词待复习</h2><p>每组最多 10 个词，回到故事原句练习。</p><button id="startDue" class="btn">开始复习</button></article>
+      </div>
+      <div class="study-meta"><p id="reviewSummary"></p><p id="studyConnection" role="status"></p><button id="historyStudy" class="btn" hidden>查看答题历史</button><div id="studyHistory" hidden></div></div>
+    </section>
+    <section class="view study-view" id="view-dictionary" aria-label="全站词典" hidden>
+      <header class="study-heading"><div class="kicker">STORY DICTIONARY</div><h1>故事词典</h1><p>用英文或中文查词，再回到它出现的故事里。</p></header>
+      <form id="globalSearch"><label for="globalQuery">搜索 30 章</label><input id="globalQuery" type="search" placeholder="试试 boundary 或 边界" autocomplete="off"><button class="btn primary-study">搜索</button></form>
+      <div id="dictionaryResults" aria-live="polite"></div>
+    </section>
+    <section class="view" id="view-read" aria-label="精读"></section>
+    <section class="view" id="view-vocab" hidden aria-label="词表"></section>
+    <section class="view" id="view-cards" hidden aria-label="闪卡"></section>
+    <div class="pop" id="pop" hidden role="dialog" aria-label="词条详情"></div>
+  </main>
+</div>
+
+<dialog class="study-dialog" id="studyExercise" aria-labelledby="exerciseTitle">
+  <form method="dialog" class="study-dialog-head"><h2 id="exerciseTitle">原句练习</h2><button class="btn" aria-label="关闭练习">关闭</button></form>
+  <div class="exercise-content"></div>
+</dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script src="data/chapters.js"></script>
+<script src="assets/js/study.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

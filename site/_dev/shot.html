@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>shot harness</title>
+<style>html,body{margin:0;padding:0;background:#F1EADE}
+#f{border:0;display:block;background:#F1EADE}
+#label{font:12px monospace;padding:4px 8px;background:#222;color:#0f0}</style>
+</head><body>
+<div id="label"></div>
+<iframe id="f"></iframe>
+<script>
+const q = new URLSearchParams(location.search);
+const target = q.get('view') || 'read';
+const theme  = q.get('theme') || 'paper';
+const pop    = q.get('pop');
+const ch     = q.get('ch') || 'ch01';
+const w      = Number(q.get('w') || 0);
+const h      = Number(q.get('h') || 0);
+
+document.getElementById('label').textContent =
+  'viewport ' + (w||'auto') + 'x' + (h||'auto');
+
+try {
+  const saved = JSON.parse(localStorage.getItem('cet4.reader.v2') || '{}');
+  saved.theme = theme; saved.chapter = ch; saved.view = target;
+  if (q.get('nav')) saved.nav = q.get('nav');
+  localStorage.setItem('cet4.reader.v2', JSON.stringify(saved));
+} catch (e) {}
+
+const f = document.getElementById('f');
+f.style.width = (w || window.innerWidth) + 'px';
+f.style.height = (h || window.innerHeight) + 'px';
+f.addEventListener('load', () => {
+  setTimeout(() => {
+    const d = f.contentDocument;
+    if (q.get('expand') === '1') {
+      const b = d.querySelector('[data-all="open"]'); if (b) b.click();
+    }
+    if (pop) {
+      const el = [...d.querySelectorAll('.w')].find(e => e.dataset.w === pop && e.offsetParent !== null);
+      if (el) el.click();
+    }
+    if (q.get('showspeak')) {
+      d.querySelectorAll('.speak').forEach(b => { b.style.opacity = '1'; b.style.transform = 'scale(1)'; });
+    }
+    if (q.get('scroll')) {
+      const list = d.querySelector('#chList');
+      if (list) { list.style.scrollBehavior = 'auto'; list.scrollTop = Number(q.get('scroll')); list.dispatchEvent(new Event('scroll')); }
+    }
+    if (q.get('diag') === '1') {
+      const doc = d.documentElement;
+      const wide = [...d.querySelectorAll('*')]
+        .map(e => ({ t: e.tagName + '.' + (e.className||'').toString().split(' ')[0],
+                     w: Math.round(e.getBoundingClientRect().width),
+                     r: Math.round(e.getBoundingClientRect().right) }))
+        .filter(o => o.r > doc.clientWidth + 1)
+        .sort((a,b) => b.r - a.r).slice(0, 12);
+      document.getElementById('label').textContent =
+        'innerW=' + f.contentWindow.innerWidth + ' clientW=' + doc.clientWidth +
+        ' scrollW=' + doc.scrollWidth +
+        (wide.length ? '\nOVERFLOW: ' + wide.map(o=>`${o.t} w=${o.w} right=${o.r}`).join(' | ') : '\nno overflow');
+    }
+    document.title = 'ready';
+  }, 600);
+});
+f.src = '../index.html#' + ch + '/' + target;
+</script>
+</body></html>
