@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path';
 
 test('study data survives a restart and only due words enter the queue', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'cet4-test-'));
-  const exe = resolve(process.env.CET4_EXE || (process.platform === 'win32' ? 'build/cet4.exe' : 'build-linux/cet4'));
+  const exe = resolve(process.env.CET4_EXE || (process.platform === 'win32' ? '../desktop/dist/cet4.exe' : 'build-cet4/cet4'));
   const port = 19000 + Math.floor(Math.random() * 20000);
   let child;
   async function api(path, payload) {

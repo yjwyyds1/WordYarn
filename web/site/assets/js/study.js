@@ -5,7 +5,7 @@
     const outbox = 'cet4.study.event.';
     let local = { position: null, words: {}, pending: [], migrated: false };
     try { Object.assign(local, JSON.parse(localStorage.getItem(key) || '{}')); } catch {}
-    let snapshot, connected = false, syncing, revision = 0, tried = false;
+    let snapshot, connected = false, syncing, revision = 0, tried = false, closing = false;
     let queue = [], item = null, searchIndex, searchVersion = 0;
     const $ = ui.$, esc = ui.esc;
     const ratings = { new: '没想起来', fuzzy: '有点模糊', known: '想起来了' };
@@ -33,9 +33,12 @@
       catch { ui.toast('浏览器无法保存备份，请检查存储设置'); }
     }
     async function api(path, payload) {
+      const headers = {};
+      if (payload) headers['Content-Type'] = 'application/json';
+      if (window.wordYarnDesktop?.token) headers['X-CET4-Token'] = window.wordYarnDesktop.token;
       const response = await fetch('api/' + path, {
-        cache: 'no-store', signal: AbortSignal.timeout(4000),
-        ...(payload ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) } : {})
+        cache: 'no-store', signal: AbortSignal.timeout(4000), headers,
+        ...(payload ? { method: 'POST', body: JSON.stringify(payload) } : {})
       });
       if (!response.ok) throw Error('HTTP ' + response.status);
       return response.json();
@@ -55,13 +58,16 @@
       const p = local.position || { chapter: 'ch01', paragraph: 'p1' };
       $('#continueDetail').textContent = label(p);
       $('#continueStudy').textContent = local.position ? '继续阅读' : '开始阅读';
+      $('#continueStudy').disabled = Boolean(window.wordYarnDesktop && !tried);
       const count = due().length;
       $('#dueCount').textContent = count;
       $('#startDue').disabled = !count;
       $('#reviewSummary').textContent = snapshot
         ? '已答题 ' + snapshot.reviewCount + ' 次 · 到期复习中连续想起至少两次：' + snapshot.remembered + ' 词'
         : '每次先回忆，再核对原句和词义。';
-      $('#studyConnection').textContent = connected && !pending().length ? '已保存到 SQLite' :
+      $('#studyConnection').textContent = connected
+        ? (pending().length ? '正在保存学习记录…' : '已保存到 SQLite') :
+        window.wordYarnDesktop && tried ? '无法连接本地数据库 · 请保留窗口并重试' :
         tried || !serverPossible ? '本地模式 · 学习记录暂存在此浏览器' : '正在连接学习服务…';
       $('#historyStudy').hidden = !connected;
     }
@@ -114,7 +120,7 @@
       save(); render(); sync();
     }
     function position(chapter, paragraph) {
-      if (!chapter || !paragraph || (local.position?.chapter === chapter && local.position.paragraph === paragraph)) return;
+      if (closing || !chapter || !paragraph || (local.position?.chapter === chapter && local.position.paragraph === paragraph)) return;
       local.position = { chapter, paragraph };
       enqueue('position', local.position);
     }
@@ -275,6 +281,26 @@
     $('#globalQuery').addEventListener('input', search);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) { render(); sync(); } });
     window.addEventListener('online', sync);
+    if (window.wordYarnDesktop) {
+      window.wordYarnFlush = async function () {
+        // Freeze new input while the window is closing. The next scroll event
+        // must not enqueue a different paragraph after the final write.
+        closing = true;
+        document.body.inert = true;
+        try {
+          await sync();
+          if (pending().length) await sync();
+          if (connected && !pending().length) return true;
+        } catch {}
+        window.wordYarnCancelClose();
+        ui.toast('还有学习记录未写入数据库，请稍后再关闭');
+        return false;
+      };
+      window.wordYarnCancelClose = function () {
+        closing = false;
+        document.body.inert = false;
+      };
+    }
     setInterval(() => { if (!document.hidden && $('#view-today').hidden === false) { render(); sync(); } }, 30000);
     render(); sync();
     return { position, rate, render, sync };

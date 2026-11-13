@@ -6,6 +6,7 @@
 #include <regex>
 #include <stdexcept>
 #include <ctime>
+#include <cstdlib>
 
 namespace fs = std::filesystem;
 using Json::Value;
@@ -151,20 +152,31 @@ std::string field(const Value& data, const char* key, const std::regex& pattern)
     return data[key].asString();
 }
 
-int main(int argc, char** argv) try {
-    const auto root = fs::weakly_canonical(fs::absolute(argc > 1 ? argv[1] : "site"));
+template<class Char>
+int run(int argc, Char** argv) try {
+    const auto root = fs::weakly_canonical(fs::absolute(argc > 1 ? fs::path(argv[1]) : fs::path("site")));
     if (!fs::is_regular_file(root / "index.html")) throw std::runtime_error("Site index.html not found");
-    const auto file = fs::weakly_canonical(fs::absolute(argc > 2 ? argv[2] : "var/study.sqlite"));
+    const auto file = fs::weakly_canonical(fs::absolute(argc > 2 ? fs::path(argv[2]) : fs::path("var/study.sqlite")));
     const auto relative = file.lexically_relative(root);
     if (!relative.empty() && *relative.begin() != "..")
         throw std::runtime_error("Keep the database outside the public site directory");
-    const int port = argc > 3 ? std::stoi(argv[3]) : 8848;
+    const int port = argc > 3 ? std::stoi(std::basic_string<Char>(argv[3])) : 8848;
     if (port < 1 || port > 65535) throw std::runtime_error("Invalid port");
     fs::create_directories(file.parent_path());
     Store store(file);
     auto& app = drogon::app();
+    const auto* tokenEnv = std::getenv("CET4_DESKTOP_TOKEN");
+    const std::string token = tokenEnv ? tokenEnv : "";
+    const auto authorize = [&](const drogon::HttpRequestPtr& req, const auto& done) {
+        if (token.empty() || req->getHeader("X-CET4-Token") == token) return true;
+        auto res = drogon::HttpResponse::newHttpJsonResponse(Value("Desktop session required"));
+        res->setStatusCode(drogon::k403Forbidden);
+        done(res);
+        return false;
+    };
     const auto get = [&](const char* path, bool history) {
-        app.registerHandler(path, [&, history](const drogon::HttpRequestPtr&, std::function<void(const drogon::HttpResponsePtr&)>&& done) {
+        app.registerHandler(path, [&, history](const drogon::HttpRequestPtr& req, std::function<void(const drogon::HttpResponsePtr&)>&& done) {
+            if (!authorize(req, done)) return;
             try {
                 auto res = drogon::HttpResponse::newHttpJsonResponse(history ? store.history() : store.study());
                 res->addHeader("Cache-Control", "no-store"); done(res);
@@ -179,6 +191,7 @@ int main(int argc, char** argv) try {
     get("/api/history", true);
     for (const std::string action : {"position", "mark", "review"}) {
         app.registerHandler("/api/" + action, [&, action](const drogon::HttpRequestPtr& req, std::function<void(const drogon::HttpResponsePtr&)>&& done) {
+            if (!authorize(req, done)) return;
             try {
                 auto json = req->getJsonObject();
                 if (req->contentType() != drogon::CT_APPLICATION_JSON || !json || !json->isObject())
@@ -210,9 +223,15 @@ int main(int argc, char** argv) try {
         }, {drogon::Post});
     }
     std::cout << "CET4: http://127.0.0.1:" << port << "/ | " << file << std::endl;
-    app.setDocumentRoot(root.string()).setClientMaxBodySize(8192).addListener("127.0.0.1", port).run();
+    app.setDocumentRoot(root.u8string()).setClientMaxBodySize(8192).addListener("127.0.0.1", port).run();
     return 0;
 } catch (const std::exception& e) {
     std::cerr << e.what() << '\n';
     return 1;
 }
+
+#if defined(_WIN32) && defined(_MSC_VER)
+int wmain(int argc, wchar_t** argv) { return run(argc, argv); }
+#else
+int main(int argc, char** argv) { return run(argc, argv); }
+#endif

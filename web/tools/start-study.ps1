@@ -41,7 +41,7 @@ try {
             }
         }
     }
-    wsl -- ./build-cet4/cet4 site var/study.sqlite "$Port"
+    wsl -- ./build-cet4/cet4 site ../var/study.sqlite "$Port"
     if ($LASTEXITCODE -ne 0 -and -not (Test-StudyService)) {
         throw "CET4 could not start on port $Port. Check for another service using that port."
     }

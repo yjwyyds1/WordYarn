@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Fix ungrammatical "The + adjective + of" constructions in chapter 21."""
 import io, sys
+from pathlib import Path
 
-path = r"D:\CET4\chapters\raw\chapter_21_story.md"
+path = Path(__file__).resolve().parents[1] / "chapters" / "raw" / "chapter_21_story.md"
 with io.open(path, "r", encoding="utf-8") as f:
     text = f.read()
 

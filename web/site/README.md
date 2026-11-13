@@ -13,9 +13,9 @@
 ### 方式 B：本地服务器（推荐，可深链）
 
 ```bash
-cd D:\CET4
+cd D:\CET4\web
 node tools\serve.mjs 8848
-# 然后打开 http://localhost:8848/index.html
+# 然后打开 http://127.0.0.1:8848/index.html
 ```
 
 好处是可以用 URL 直接跳到某一章的某个视图：
@@ -72,7 +72,7 @@ node tools\serve.mjs 8848
 ## 三、目录结构
 
 ```
-D:\CET4
+D:\CET4\web
 ├─ 词汇故事集/            源文件（30 篇 Markdown，正文 + 目标词表）
 ├─ content/              人工撰写的内容
 │   ├─ chNN.sentences.json   第 NN 章逐句中文对照译文
@@ -165,7 +165,7 @@ node tools\normalize_names.mjs --write   # 残留的英文人名 → 音译
 - **切句器会合并称谓缩写**：`Ms. Chen said` 不会被拆成两句。30 章共修掉 49 处（9 章受影响），每处合并后的句子都重译过。
 - **多词性词的原文例句**：一个词在正文里只出现 N 次，就只能给 N 个词性行配到不同的原文句。配不上的那个词性，卡片上会明说「本篇正文只出现了该词的其他词性用法」，不会硬凑。
 - **数据用 classic `<script>` 而不是 fetch**，就是为了让 `file://` 双击打开也能跑（fetch 会被浏览器拦）。
-- **状态存在 localStorage**（key `cet4.reader.v2`），换浏览器或清缓存会丢。
+- **离线网页的状态存在 localStorage**（key `cet4.reader.v2`），换浏览器或清缓存会丢。
 
 ---
 
@@ -173,7 +173,7 @@ node tools\normalize_names.mjs --write   # 残留的英文人名 → 音译
 
 ```bash
 node tools\serve.mjs 8848                      # 先起服务
-powershell -File tools\shot.ps1 -Url "http://localhost:8848/_dev/shot.html?view=read&pop=basin" -Out "pop.png" -W 1440 -H 900
+powershell -File tools\shot.ps1 -Url "http://127.0.0.1:8848/_dev/shot.html?view=read&pop=basin" -Out "pop.png" -W 1440 -H 900
 ```
 
 `_dev/shot.html` 支持这些参数：`view`(read/vocab/cards)、`ch`(ch01…ch30)、`theme`(paper/night)、`pop`(点开某个词)、`expand=1`(展开全部译文)、`w`/`h`(iframe 宽高，用来测窄屏)、`diag=1`(输出溢出元素)。

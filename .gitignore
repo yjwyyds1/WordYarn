@@ -2,6 +2,9 @@
 /build-*/
 /var/
 /vcpkg_installed/
+/desktop/dist/
+/desktop/build*/
+/web/build*/
 node_modules/
 *.log
 .DS_Store
