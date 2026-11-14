@@ -62,6 +62,7 @@ public:
           CREATE TABLE IF NOT EXISTS review_history(
             id INTEGER PRIMARY KEY, attempt TEXT NOT NULL UNIQUE, chapter TEXT NOT NULL,
             lemma TEXT NOT NULL, rating TEXT NOT NULL, reviewed_at INTEGER NOT NULL);
+          CREATE INDEX IF NOT EXISTS review_history_time ON review_history(reviewed_at);
         )SQL");
     }
     Value study() {
@@ -83,6 +84,7 @@ public:
             word["lemma"] = words.str(1);
             word["rating"] = words.str(2);
             word["dueAt"] = words.number(3);
+            word["streak"] = words.number(4);
             if (words.number(4) >= 2) ++remembered;
             data["words"].append(word);
             if (words.number(3) <= now) data["due"].append(word);
@@ -91,6 +93,11 @@ public:
         count.next();
         data["reviewCount"] = count.number(0);
         data["remembered"] = remembered;
+        data["activity"] = Value(Json::objectValue);
+        Statement activity(db.get(), "SELECT date(reviewed_at,'unixepoch','+8 hours'),COUNT(*) "
+          "FROM review_history WHERE reviewed_at>=? GROUP BY 1");
+        activity.bind(1, static_cast<int64_t>(now) - 84 * 86400);
+        while (activity.next()) data["activity"][activity.str(0)] = activity.number(1);
         return data;
     }
     Value history() {
@@ -112,7 +119,7 @@ public:
         Statement q(db.get(), "INSERT INTO reading_position VALUES(1,?,?) ON CONFLICT(id) DO UPDATE SET chapter=excluded.chapter,paragraph=excluded.paragraph");
         q.bind(1, chapter); q.bind(2, paragraph); q.next();
     }
-    void word(const std::string& chapter, const std::string& lemma, const std::string& rating, const std::string& attempt, int64_t now) {
+    int64_t word(const std::string& chapter, const std::string& lemma, const std::string& rating, const std::string& attempt, int64_t now) {
         std::lock_guard<std::mutex> lock(mutex);
         exec("BEGIN IMMEDIATE");
         try {
@@ -120,7 +127,13 @@ public:
                 Statement event(db.get(), "INSERT INTO review_history(attempt,chapter,lemma,rating,reviewed_at) VALUES(?,?,?,?,?) ON CONFLICT(attempt) DO NOTHING");
                 event.bind(1, attempt); event.bind(2, chapter); event.bind(3, lemma);
                 event.bind(4, rating); event.bind(5, now); event.next();
-                if (!sqlite3_changes(db.get())) { exec("COMMIT"); return; }
+                if (!sqlite3_changes(db.get())) {
+                    Statement saved(db.get(), "SELECT due_at FROM word_progress WHERE chapter=? AND lemma=?");
+                    saved.bind(1, chapter); saved.bind(2, lemma);
+                    const auto scheduled = saved.next() ? saved.number(0) : 0;
+                    exec("COMMIT");
+                    return scheduled;
+                }
             }
             int streak = 0;
             int64_t due = now;
@@ -133,14 +146,16 @@ public:
                     if (old.number(1) <= now) ++streak;
                     else alreadyScheduled = old.number(1);
                 } else if (rating == "known") { streak = 1; }
-                due += rating == "new" ? 600 : rating == "fuzzy" ? 86400 :
-                    (streak <= 1 ? 86400 : streak == 2 ? 3 * 86400 : 7 * 86400);
+                static constexpr int knownDays[] = {1, 3, 7, 15, 30};
+                const int step = streak <= 1 ? 0 : streak >= 5 ? 4 : streak - 1;
+                due += rating == "new" ? 600 : rating == "fuzzy" ? 12 * 3600 : knownDays[step] * 86400;
                 if (alreadyScheduled) due = alreadyScheduled;
             } else if (rating == "known") { due += 86400; }
             Statement q(db.get(), "INSERT INTO word_progress VALUES(?,?,?,?,?) ON CONFLICT(chapter,lemma) DO UPDATE SET rating=excluded.rating,due_at=excluded.due_at,streak=excluded.streak");
             q.bind(1, chapter); q.bind(2, lemma); q.bind(3, rating); q.bind(4, due); q.bind(5, streak);
             q.next();
             exec("COMMIT");
+            return due;
         } catch (...) { exec("ROLLBACK"); throw; }
     }
 };
@@ -199,6 +214,7 @@ int run(int argc, Char** argv) try {
                 static const std::regex chapterId("ch(0[1-9]|[12][0-9]|30)"), paragraphId("p[1-9][0-9]?"),
                     wordId("[A-Za-z][A-Za-z0-9 .'/&()_-]*"), grades("new|fuzzy|known"), attemptId("[A-Za-z0-9_-]{1,100}");
                 auto chapter = field(*json, "chapter", chapterId);
+                Value response(true);
                 if (action == "position") store.position(chapter, field(*json, "paragraph", paragraphId));
                 else {
                     auto now = static_cast<int64_t>(std::time(nullptr));
@@ -208,10 +224,12 @@ int run(int argc, Char** argv) try {
                             throw std::invalid_argument("Invalid reviewedAt");
                         now = time.asInt64();
                     }
-                    store.word(chapter, field(*json, "lemma", wordId), field(*json, "rating", grades),
+                    const auto dueAt = store.word(chapter, field(*json, "lemma", wordId), field(*json, "rating", grades),
                         action == "review" ? field(*json, "attempt", attemptId) : "", now);
+                    response = Value(Json::objectValue);
+                    response["dueAt"] = Json::Int64(dueAt);
                 }
-                done(drogon::HttpResponse::newHttpJsonResponse(Value(true)));
+                done(drogon::HttpResponse::newHttpJsonResponse(response));
             } catch (const std::invalid_argument& e) {
                 auto res = drogon::HttpResponse::newHttpJsonResponse(Value(e.what()));
                 res->setStatusCode(drogon::k400BadRequest); done(res);
