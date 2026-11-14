@@ -1,0 +1,2 @@
+// Main Explorer and taskbar icon. CMake tracks the linked ICO as a build input.
+101 ICON "wordyarn.ico"

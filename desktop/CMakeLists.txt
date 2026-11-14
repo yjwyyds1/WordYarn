@@ -16,14 +16,15 @@ endif()
 # This compiles the same study service as web/, avoiding duplicated database logic.
 add_subdirectory(../web web-service)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
-add_executable(WordYarn WIN32 src/main.cpp src/migration.cpp)
+add_executable(WordYarn WIN32 src/main.cpp src/migration.cpp src/wordyarn.rc)
+set_property(SOURCE src/wordyarn.rc APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/wordyarn.ico")
 target_compile_features(WordYarn PRIVATE cxx_std_17)
 target_compile_options(WordYarn PRIVATE /utf-8)
 target_compile_definitions(WordYarn PRIVATE UNICODE _UNICODE)
 target_include_directories(WordYarn SYSTEM PRIVATE "${WEBVIEW2_NATIVE}/include")
 target_link_libraries(WordYarn PRIVATE unofficial::sqlite3::sqlite3
   "${WEBVIEW2_NATIVE}/x64/WebView2Loader.dll.lib"
-  user32 gdi32 shlwapi shell32 ole32 uuid version winhttp bcrypt ws2_32)
+  user32 gdi32 shlwapi shell32 ole32 uuid version winhttp bcrypt crypt32 ws2_32 dwmapi sapi)
 
 install(TARGETS WordYarn cet4 RUNTIME DESTINATION .)
 install(FILES "${WEBVIEW2_NATIVE}/x64/WebView2Loader.dll" DESTINATION .)
