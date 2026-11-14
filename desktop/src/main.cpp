@@ -1,14 +1,21 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
+#include <windowsx.h>
 #include <winsock2.h>
 #include <shellapi.h>
 #include <shlobj.h>
 #include <winhttp.h>
 #include <bcrypt.h>
+#include <wincrypt.h>
+#include <dwmapi.h>
+#include <sapi.h>
 #include <wrl.h>
 #include <WebView2.h>
 #include <array>
+#include <algorithm>
+#include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
@@ -24,8 +31,11 @@ constexpr wchar_t title[] = L"WordYarn · 四级词汇故事集";
 constexpr UINT focusMessage = WM_APP + 1;
 constexpr UINT finishCloseMessage = WM_APP + 2;
 constexpr UINT startupFailureMessage = WM_APP + 3;
+constexpr UINT windowActionMessage = WM_APP + 4;
+constexpr int appIcon = 101;
 constexpr UINT_PTR readyTimer = 1;
 constexpr UINT_PTR closeTimer = 2;
+constexpr UINT_PTR speechTimer = 3;
 struct Handle {
     HANDLE value = nullptr;
     ~Handle() { if (value) CloseHandle(value); }
@@ -43,14 +53,23 @@ struct App {
     HWND window = nullptr;
     ComPtr<ICoreWebView2Controller> controller;
     ComPtr<ICoreWebView2> view;
+    ComPtr<ISpVoice> nativeVoice;
+    ComPtr<IStream> speechBuffer;
+    ComPtr<ISpStream> speechStream;
+    int speechGain = 100;
+    unsigned speechId = 0;
+    bool nativePaused = false;
+    HBRUSH frameBrush = nullptr;
     std::wstring token, origin;
     fs::path profile;
     int port = 0;
     bool closing = false;
+    bool fullscreen = true;
     unsigned closeAttempt = 0;
     unsigned checks = 0;
 
     ~App() {
+        if (frameBrush) DeleteObject(frameBrush);
         if (job.value) {
             CloseHandle(job.value);
             job.value = nullptr;
@@ -65,7 +84,161 @@ struct App {
     void resize() {
         RECT area{};
         GetClientRect(window, &area);
+        if (!fullscreen) {
+            const auto edge = MulDiv(5, GetDpiForWindow(window), 96);
+            InflateRect(&area, -edge, -edge);
+        }
         if (controller) controller->put_Bounds(area);
+    }
+
+    void stopNativeSpeech() {
+        KillTimer(window, speechTimer);
+        if (!nativeVoice) return;
+        if (nativePaused) nativeVoice->Resume();
+        nativePaused = false;
+        nativeVoice->Speak(nullptr, SPF_PURGEBEFORESPEAK, nullptr);
+        if (speechStream) {
+            nativeVoice->SetOutput(nullptr, TRUE);
+            speechStream.Reset();
+            speechBuffer.Reset();
+        }
+    }
+
+    void speechReply(bool ok) {
+        KillTimer(window, speechTimer);
+        if (!view) return;
+        std::wstring audio;
+        if (ok && speechBuffer) {
+            try { audio = boostedAudio(); } catch (const std::exception&) {}
+            ok = !audio.empty();
+            stopNativeSpeech();
+        }
+        const auto script = L"window.wordYarnSpeechResult?.(" + std::to_wstring(speechId) +
+            (ok && !audio.empty() ? L",true,'" + audio + L"')" : ok ? L",true)" : L",false)");
+        view->ExecuteScript(script.c_str(), nullptr);
+    }
+
+    bool bufferSpeech() {
+        WAVEFORMATEX format{WAVE_FORMAT_PCM, 1, 22050, 44100, 2, 16, 0};
+        return SUCCEEDED(CreateStreamOnHGlobal(nullptr, TRUE, &speechBuffer)) &&
+            SUCCEEDED(CoCreateInstance(CLSID_SpStream, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&speechStream))) &&
+            SUCCEEDED(speechStream->SetBaseStream(speechBuffer.Get(), SPDFID_WaveFormatEx, &format)) &&
+            SUCCEEDED(nativeVoice->SetOutput(speechStream.Get(), FALSE));
+    }
+
+    std::wstring boostedAudio() {
+        STATSTG info{};
+        LARGE_INTEGER start{};
+        if (FAILED(speechBuffer->Stat(&info, STATFLAG_NONAME)) || info.cbSize.QuadPart < 2 ||
+            info.cbSize.QuadPart > 8 * 1024 * 1024 ||
+            FAILED(speechBuffer->Seek(start, STREAM_SEEK_SET, nullptr))) return {};
+        const auto pcmBytes = static_cast<uint32_t>(info.cbSize.QuadPart) & ~1u;
+        const auto waveBytes = 44 + pcmBytes;
+        std::string wave(waveBytes, '\0');
+        ULONG read = 0;
+        if (FAILED(speechBuffer->Read(wave.data() + 44, pcmBytes, &read)) || read != pcmBytes) return {};
+        const auto put = [&](size_t offset, uint32_t number) { std::memcpy(wave.data() + offset, &number, 4); };
+        std::memcpy(wave.data(), "RIFF", 4); put(4, waveBytes - 8);
+        std::memcpy(wave.data() + 8, "WAVEfmt ", 8);
+        put(16, 16); put(20, 0x10001); put(24, 22050); put(28, 44100); put(32, 0x100002);
+        std::memcpy(wave.data() + 36, "data", 4); put(40, pcmBytes);
+        // Cap the requested gain against the waveform's peak to avoid clipping.
+        double gain = speechGain / 100.0;
+        int peak = 0;
+        for (unsigned i = 44; i < waveBytes; i += 2) {
+            int16_t sample; std::memcpy(&sample, wave.data() + i, 2);
+            peak = std::max(peak, sample < 0 ? -static_cast<int>(sample) : static_cast<int>(sample));
+        }
+        if (peak) gain = std::min(gain, 32767.0 / peak);
+        for (unsigned i = 44; i < waveBytes; i += 2) {
+            int16_t sample; std::memcpy(&sample, wave.data() + i, 2);
+            sample = static_cast<int16_t>(sample * gain);
+            std::memcpy(wave.data() + i, &sample, 2);
+        }
+        DWORD length = 0;
+        constexpr auto flags = CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF;
+        const auto* bytes = reinterpret_cast<const BYTE*>(wave.data());
+        if (!CryptBinaryToStringW(bytes, waveBytes, flags, nullptr, &length)) return {};
+        std::wstring encoded(length, L'\0');
+        if (!CryptBinaryToStringW(bytes, waveBytes, flags, encoded.data(), &length)) return {};
+        encoded.resize(length);
+        return encoded;
+    }
+
+    bool startEnglishVoice() {
+        if (nativeVoice) return true;
+        ComPtr<ISpVoice> voice;
+        if (FAILED(CoCreateInstance(CLSID_SpVoice, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&voice)))) return false;
+        ComPtr<ISpObjectTokenCategory> category;
+        if (FAILED(CoCreateInstance(CLSID_SpObjectTokenCategory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&category))) ||
+            FAILED(category->SetId(SPCAT_VOICES, FALSE))) return false;
+        for (const auto language : {L"Language=409", L"Language=809", L"Language=1009", L"Language=c09"}) {
+            ComPtr<IEnumSpObjectTokens> choices;
+            ComPtr<ISpObjectToken> token;
+            if (SUCCEEDED(category->EnumTokens(language, nullptr, &choices)) &&
+                choices && choices->Next(1, &token, nullptr) == S_OK && SUCCEEDED(voice->SetVoice(token.Get()))) {
+                nativeVoice = voice;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void speechCommand(const std::wstring& command) {
+        if (command == L"speech:stop") { stopNativeSpeech(); return; }
+        if (command == L"speech:pause" && nativeVoice && !nativePaused) {
+            nativePaused = SUCCEEDED(nativeVoice->Pause()); return;
+        }
+        if (command == L"speech:resume" && nativeVoice && nativePaused) {
+            nativeVoice->Resume(); nativePaused = false; return;
+        }
+        if (command.rfind(L"speech:play:", 0) != 0 || command.size() > 2200) return;
+        const auto idEnd = command.find(L':', 12);
+        const auto rateEnd = idEnd == std::wstring::npos ? idEnd : command.find(L':', idEnd + 1);
+        const auto volumeEnd = rateEnd == std::wstring::npos ? rateEnd : command.find(L':', rateEnd + 1);
+        if (volumeEnd == std::wstring::npos) return;
+        try {
+            speechId = std::stoul(command.substr(12, idEnd - 12));
+            const int rate = std::stoi(command.substr(idEnd + 1, rateEnd - idEnd - 1));
+            const int volume = std::stoi(command.substr(rateEnd + 1, volumeEnd - rateEnd - 1));
+            stopNativeSpeech();
+            if (!startEnglishVoice()) { speechReply(false); return; }
+            nativeVoice->SetRate(rate < -5 ? -5 : rate > 5 ? 5 : rate);
+            speechGain = std::clamp(volume, 0, 150);
+            nativeVoice->SetVolume(static_cast<USHORT>(std::min(speechGain, 100)));
+            if (speechGain > 100 && !bufferSpeech()) {
+                nativeVoice->SetOutput(nullptr, TRUE);
+                speechBuffer.Reset();
+                speechStream.Reset();
+            }
+            if (FAILED(nativeVoice->Speak(command.c_str() + volumeEnd + 1, SPF_ASYNC | SPF_IS_NOT_XML, nullptr)) ||
+                !SetTimer(window, speechTimer, 40, nullptr)) {
+                stopNativeSpeech();
+                speechReply(false);
+            }
+        } catch (const std::exception&) { return; }
+    }
+
+    void layoutWindow() {
+        const HMONITOR monitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
+        MONITORINFO info{sizeof(info)};
+        if (!GetMonitorInfoW(monitor, &info)) return;
+        RECT area = fullscreen ? info.rcMonitor : info.rcWork;
+        if (!fullscreen) {
+            const auto pad = MulDiv(36, GetDpiForWindow(window), 96);
+            InflateRect(&area, -pad, -pad);
+        }
+        const COLORREF border = DWMWA_COLOR_NONE;
+        DwmSetWindowAttribute(window, DWMWA_BORDER_COLOR, &border, sizeof(border));
+        const auto corner = fullscreen ? DWMWCP_DONOTROUND : DWMWCP_ROUND;
+        DwmSetWindowAttribute(window, DWMWA_WINDOW_CORNER_PREFERENCE, &corner, sizeof(corner));
+        SetWindowLongPtrW(window, GWL_STYLE, WS_POPUP | WS_SYSMENU | WS_MINIMIZEBOX |
+            WS_CLIPCHILDREN | (fullscreen ? 0 : WS_THICKFRAME) | (IsWindowVisible(window) ? WS_VISIBLE : 0));
+        SetWindowPos(window, nullptr, area.left, area.top, area.right - area.left, area.bottom - area.top,
+            SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+        if (view) view->ExecuteScript(fullscreen ? L"window.wordYarnWindowState?.(true)" :
+            L"window.wordYarnWindowState?.(false)", nullptr);
+        resize();
     }
 
     bool ready() const {
@@ -98,6 +271,9 @@ struct App {
                                 if (!IsWindow(window)) return S_OK;
                                 if (FAILED(hr) || !ctl) { fail(L"无法创建阅读窗口。"); return S_OK; }
                                 controller = ctl;
+                                ComPtr<ICoreWebView2Controller2> background;
+                                if (SUCCEEDED(controller.As(&background)))
+                                    background->put_DefaultBackgroundColor({255, 241, 234, 222});
                                 if (FAILED(controller->get_CoreWebView2(&view)) || !view) {
                                     fail(L"无法初始化阅读窗口。"); return S_OK;
                                 }
@@ -134,15 +310,27 @@ struct App {
             }).Get(), &event);
         view->add_WebMessageReceived(Callback<ICoreWebView2WebMessageReceivedEventHandler>(
             [this](ICoreWebView2*, ICoreWebView2WebMessageReceivedEventArgs* args) -> HRESULT {
-                if (!closing || !IsWindow(window)) return S_OK;
+                if (!IsWindow(window)) return S_OK;
                 LPWSTR source = nullptr, message = nullptr;
                 if (SUCCEEDED(args->get_Source(&source)) && source &&
                     std::wstring(source).rfind(origin, 0) == 0 &&
                     SUCCEEDED(args->TryGetWebMessageAsString(&message)) && message) {
                     const auto attempt = std::to_wstring(closeAttempt);
                     const std::wstring answer = message;
-                    if (answer == L"saved:" + attempt || answer == L"unsaved:" + attempt)
+                    if (closing && (answer == L"saved:" + attempt || answer == L"unsaved:" + attempt))
                         PostMessageW(window, finishCloseMessage, closeAttempt, answer == L"saved:" + attempt);
+                    else if (!closing && answer == L"window:fullscreen")
+                        PostMessageW(window, windowActionMessage, 1, 0);
+                    else if (!closing && answer == L"window:minimize")
+                        PostMessageW(window, windowActionMessage, 2, 0);
+                    else if (!closing && answer == L"window:close")
+                        PostMessageW(window, WM_CLOSE, 0, 0);
+                    else if (!closing && answer == L"window:move")
+                        PostMessageW(window, windowActionMessage, 3, 0);
+                    else if (!closing && answer == L"window:mixer")
+                        PostMessageW(window, windowActionMessage, 4, 0);
+                    else if (!closing && answer.rfind(L"speech:", 0) == 0)
+                        speechCommand(answer);
                 }
                 CoTaskMemFree(source);
                 CoTaskMemFree(message);
@@ -224,11 +412,38 @@ LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     auto* app = reinterpret_cast<App*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
     if (!app) return DefWindowProcW(hwnd, msg, w, l);
     switch (msg) {
+    case WM_NCCALCSIZE:
+        if (!app->fullscreen && w) return 0;
+        break;
+    case WM_NCHITTEST:
+        if (!app->fullscreen) {
+            RECT r{};
+            GetWindowRect(hwnd, &r);
+            const auto edge = MulDiv(5, GetDpiForWindow(hwnd), 96);
+            const auto x = GET_X_LPARAM(l), y = GET_Y_LPARAM(l);
+            const bool left = x < r.left + edge, right = x >= r.right - edge;
+            if (y < r.top + edge) return left ? HTTOPLEFT : right ? HTTOPRIGHT : HTTOP;
+            if (y >= r.bottom - edge) return left ? HTBOTTOMLEFT : right ? HTBOTTOMRIGHT : HTBOTTOM;
+            if (left || right) return left ? HTLEFT : HTRIGHT;
+        }
+        break;
     case WM_SIZE: app->resize(); return 0;
+    case WM_DISPLAYCHANGE: app->layoutWindow(); return 0;
+    case windowActionMessage:
+        if (w == 1) { app->fullscreen = !app->fullscreen; app->layoutWindow(); }
+        if (w == 2) ShowWindow(hwnd, SW_MINIMIZE);
+        if (w == 3 && !app->fullscreen && (GetAsyncKeyState(VK_LBUTTON) & 0x8000)) {
+            POINT point{}; GetCursorPos(&point);
+            ReleaseCapture();
+            SendMessageW(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, MAKELPARAM(point.x, point.y));
+        }
+        if (w == 4) ShellExecuteW(hwnd, L"open", L"ms-settings:apps-volume", nullptr, nullptr, SW_SHOWNORMAL);
+        return 0;
     case WM_CLOSE: app->close(); return 0;
     case WM_DESTROY:
         KillTimer(hwnd, readyTimer);
         KillTimer(hwnd, closeTimer);
+        app->stopNativeSpeech();
         if (app->controller) app->controller->Close();
         PostQuitMessage(0);
         return 0;
@@ -251,6 +466,13 @@ LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         DestroyWindow(hwnd);
         return 0;
     case WM_TIMER:
+        if (w == speechTimer) {
+            if (app->nativeVoice && !app->nativePaused) {
+                const auto status = app->nativeVoice->WaitUntilDone(0);
+                if (status != S_FALSE) app->speechReply(status == S_OK);
+            }
+            return 0;
+        }
         if (w == closeTimer) {
             KillTimer(hwnd, closeTimer);
             if (app->closing) app->confirmClose();
@@ -265,12 +487,22 @@ LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             app->loadView();
         }
         return 0;
+    case WM_ERASEBKGND: {
+        RECT area{};
+        GetClientRect(hwnd, &area);
+        FillRect(reinterpret_cast<HDC>(w), &area, app->frameBrush);
+        return 1;
+    }
     case WM_PAINT: {
         PAINTSTRUCT paint{};
         auto dc = BeginPaint(hwnd, &paint);
         RECT area{};
         GetClientRect(hwnd, &area);
-        DrawTextW(dc, L"正在打开词汇故事集…", -1, &area, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        if (!app->view) {
+            SetBkMode(dc, TRANSPARENT);
+            SetTextColor(dc, RGB(235, 225, 210));
+            DrawTextW(dc, L"正在打开词汇故事集…", -1, &area, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        }
         EndPaint(hwnd, &paint);
         return 0;
     }
@@ -346,6 +578,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
             return 0;
         }
         const auto folder = installFolder();
+        SetCurrentProcessExplicitAppUserModelID(L"WordYarn.CET4.Desktop");
         const auto data = overrideArg.empty() ? dataFolder() : fs::absolute(overrideArg);
         fs::create_directories(data);
         const auto old = folder.parent_path().parent_path() / L"var" / L"study.sqlite";
@@ -361,6 +594,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
         app.origin = L"http://127.0.0.1:" + std::to_wstring(app.port) + L"/";
         app.token = sessionToken();
         app.profile = data / L"WebView2";
+        app.frameBrush = CreateSolidBrush(RGB(41, 37, 31));
         app.launch(folder, db);
 
         WNDCLASSW wc{};
@@ -368,13 +602,16 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
         wc.lpfnWndProc = windowProc;
         wc.lpszClassName = windowClass;
         wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
-        wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
-        wc.hIcon = LoadIconW(nullptr, IDI_APPLICATION);
+        wc.hIcon = LoadIconW(instance, MAKEINTRESOURCEW(appIcon));
         if (!RegisterClassW(&wc)) throw std::runtime_error("Cannot register desktop window");
-        const auto window = CreateWindowExW(0, windowClass, title, WS_OVERLAPPEDWINDOW,
+        const auto window = CreateWindowExW(WS_EX_APPWINDOW, windowClass, title, WS_POPUP | WS_SYSMENU | WS_MINIMIZEBOX,
             CW_USEDEFAULT, CW_USEDEFAULT, 1220, 850, nullptr, nullptr, instance, &app);
         if (!window) throw std::runtime_error("Cannot create desktop window");
-        ShowWindow(window, show);
+        SendMessageW(window, WM_SETICON, ICON_SMALL, (LPARAM)LoadImageW(instance,
+            MAKEINTRESOURCEW(appIcon), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED));
+        SendMessageW(window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(wc.hIcon));
+        app.layoutWindow();
+        ShowWindow(window, show == SW_HIDE ? SW_SHOW : show);
         if (!SetTimer(window, readyTimer, 150, nullptr)) {
             DestroyWindow(window);
             throw std::runtime_error("Cannot wait for the study service");
