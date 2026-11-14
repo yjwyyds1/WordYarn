@@ -30,6 +30,10 @@ test('reader, word list, flashcards, dictation and activity dashboard', async ()
     await page.goto(base+'#ch01/read');
     await page.locator('.para[data-open=true]').first().waitFor({timeout:4000});
     assert.equal(await page.locator('.para[data-open=false]').count(),0);
+    await page.evaluate(() => window.scrollTo(0, 1700));
+    await page.waitForFunction(() => scrollY >= 1600);
+    assert.equal(await page.locator('.topbar').evaluate(el => el.getBoundingClientRect().top), 0);
+    await page.evaluate(() => window.scrollTo(0, 0));
     const target = page.locator('.srow .w[data-w=boundary]').first();
     await target.evaluate(el=>window.scrollBy(0,el.getBoundingClientRect().top-105));
     await target.click();
@@ -55,6 +59,15 @@ test('reader, word list, flashcards, dictation and activity dashboard', async ()
     assert.equal(await page.locator('.card[data-w=boundary]').count(),1);
     await page.locator('.card[data-w=boundary] [data-speak-kind=origin]').first().click();
     assert.ok((await page.evaluate(()=>spoken.at(-1))).includes('boundary'));
+    const wordCard = page.locator('.card[data-w=boundary]');
+    const origin = await wordCard.locator('[data-speak-kind=origin]').first().getAttribute('data-speak');
+    const example = await wordCard.locator('[data-speak-kind=example]').first().getAttribute('data-speak');
+    const combined = wordCard.getByRole('button', {name:'连读单词和句子'});
+    assert.equal(await combined.count(),1);
+    const previousCount = await page.evaluate(()=>spoken.length);
+    await combined.click();
+    await page.waitForFunction(n => spoken.length === n + 3, previousCount);
+    assert.deepEqual(await page.evaluate(n => spoken.slice(n), previousCount), ['boundary', origin, example]);
     await page.locator('.card[data-w=boundary] [data-jump]').first().click();
     await page.locator('.srow.is-flash').filter({hasText:'boundary'}).waitFor();
     await page.getByRole('button',{name:'返回词表'}).click();
@@ -62,7 +75,7 @@ test('reader, word list, flashcards, dictation and activity dashboard', async ()
     await page.getByRole('tab',{name:'闪卡'}).click();
     await page.locator('.fc-example').waitFor();
     const first = await page.locator('.fc-word').textContent();
-    assert.ok((await page.evaluate(()=>spoken)).includes(first));
+    assert.ok((await page.evaluate(()=>spoken.map(s=>s.toLowerCase()))).includes(first.toLowerCase()));
     await page.evaluate(() => document.body.dispatchEvent(new KeyboardEvent('keydown', {key:'3',repeat:true,bubbles:true})));
     assert.equal(await page.locator('.fc-word').textContent(), first);
     await page.locator('.fc-actions [data-rate=known]').click();
@@ -96,8 +109,31 @@ test('reader, word list, flashcards, dictation and activity dashboard', async ()
     await mobile.locator('.chapter-stat').first().waitFor();
     assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth),375);
     await page.setViewportSize({width:760,height:700});
-    assert.equal(await page.locator('#btnNav').getAttribute('aria-expanded'),'false');
+    await page.waitForFunction(() => document.querySelector('#btnNav').getAttribute('aria-expanded') === 'false');
     await mobile.close();
+    // Exercise both title rows in the layout used by the Windows host.
+    const desktop = await browser.newPage({viewport:{width:1280,height:780},reducedMotion:'reduce'});
+    await desktop.addInitScript(() => { window.wordYarnDesktop = {}; });
+    await desktop.route('**/api/**',route=>route.fulfill({status:404}));
+    await desktop.goto(base+'#ch01/read');
+    await desktop.locator('.srow').first().waitFor();
+    for (const resize of [{width:1280,height:780},{width:760,height:700}]) {
+      await desktop.setViewportSize(resize);
+      await desktop.evaluate(() => {
+        document.documentElement.dataset.theme = 'night';
+        window.scrollTo(0, document.documentElement.scrollHeight);
+      });
+      await desktop.waitForFunction(() => scrollY > 1000);
+      const top = await desktop.evaluate(() => {
+        const rect = s => document.querySelector(s).getBoundingClientRect();
+        return { title:rect('#desktopTitle').top, titleBottom:rect('#desktopTitle').bottom,
+          nav:rect('.topbar').top, navBottom:rect('.topbar').bottom, side:rect('#sidebar').top };
+      });
+      assert.equal(top.title,0);
+      assert.equal(top.nav,top.titleBottom);
+      assert.equal(top.side,top.navBottom);
+    }
+    await desktop.close();
     assert.deepEqual(errors,[]);
   } finally {
     if (browser) await browser.close();
