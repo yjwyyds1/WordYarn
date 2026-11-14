@@ -38,7 +38,6 @@
   try {
     var saved = JSON.parse(localStorage.getItem(KEY) || '{}');
     Object.keys(saved).forEach(function (k) { state[k] = saved[k]; });
-    if (saved.nav === undefined && window.innerWidth <= 900) state.nav = 'closed';
   } catch (e) { /* 忽略损坏的本地数据 */ }
 
   var saveTimer = null;
@@ -133,8 +132,10 @@
   }
 
   /* ---------- 侧栏：开合 / 滚动 ---------- */
+  var drawerOpen = false;
+  var compactNav = matchMedia('(max-width: 900px)');
   function applyNav() {
-    var closed = state.nav === 'closed';
+    var closed = isNarrow() ? !drawerOpen : state.nav === 'closed';
     document.body.classList.toggle('nav-closed', closed);
     document.body.classList.toggle('nav-open', !closed);
     var b = $('#btnNav');
@@ -143,11 +144,16 @@
     b.setAttribute('aria-expanded', closed ? 'false' : 'true');
   }
   function toggleNav(force) {
+    if (isNarrow()) {
+      drawerOpen = force ?? !drawerOpen;
+      applyNav();
+      return;
+    }
     var want = force !== undefined ? force : (state.nav === 'closed');
     state.nav = want ? 'open' : 'closed';
     applyNav(); save();
   }
-  function isNarrow() { return window.innerWidth <= 900; }
+  function isNarrow() { return compactNav.matches; }
 
   function updateSideScroll() {
     var list = $('#chList');
@@ -186,6 +192,7 @@
 
   function renderRead(ch) {
     var head =
+      '<div id="vocabReturn" class="origin-return" hidden><button class="btn" data-vocab-return>返回词表</button><span>正在查看原句</span></div>' +
       '<header class="ch-head">' +
         '<div class="kicker">Chapter ' + (ch.no < 10 ? '0' + ch.no : ch.no) + '</div>' +
         '<h1 class="ch-name">' + esc(ch.title) + '<span>' + esc(ch.titleCn) + '</span></h1>' +
@@ -210,7 +217,7 @@
 
     var openMap = state.open[ch.id] || {};
     var body = ch.paragraphs.map(function (p, pi) {
-      var isOpen = openMap[p.id] !== undefined ? openMap[p.id] : false;
+      var isOpen = openMap[p.id] !== undefined ? openMap[p.id] : true;
       var prose = p.sentences.map(function (s) { return '<span data-gi="' + s._gi + '">' + markText(s.en, s.words) + '</span>'; }).join(' ');
       var rows = p.sentences.map(function (s) {
         return '<div class="srow" data-gi="' + s._gi + '">' +
@@ -227,10 +234,11 @@
             '<span class="para-no">' + cnNum(pi + 1) + '</span>' +
             '<span class="para-meta">第 ' + (pi + 1) + ' 段 · ' + p.sentences.length + ' 句</span>' +
           '</button>' +
-          '<button class="speak always" data-say-para="' + p.id + '" title="朗读本段" aria-label="朗读第 ' + (pi + 1) + ' 段">♪</button>' +
+          '<button class="speak always" data-say-para="' + p.id + '" title="朗读本段" aria-label="朗读第 ' + (pi + 1) + ' 段">播放本段</button>' +
           '<span class="para-state">' + (isOpen ? '逐句对照' : '连续阅读') + '</span>' +
           '<span class="chev" aria-hidden="true"></span>' +
         '</div>' +
+        '<div class="para-playback" hidden><progress aria-label="本段朗读进度"></progress><span></span></div>' +
         '<div class="para-prose">' + prose + '</div>' +
         '<div class="para-rows">' + rows + '</div>' +
         '<button class="btn para-practice" data-study-practice="' + p.id + '">练本段原句</button>' +
@@ -253,11 +261,15 @@
   }
 
   /** 原文例句块。多词性的词若本篇没有该词性的用法，明说而不是硬凑。 */
+  function speakLink(text, label, kind) {
+    return '<button class="link sentence-speak" data-speak-kind="' + kind + '" data-speak="' + esc(text) + '">' + label + '</button>';
+  }
+
   function originBlock(v, withJump) {
     var o = v.origin != null ? flatIdx[v.origin] : null;
     if (o) {
       return '<div class="blk"><div class="blk-h">原文' +
-        (withJump ? '<button class="link" data-jump="' + v.origin + '">定位 →</button>' : '') + '</div>' +
+        speakLink(o.en, '朗读原句', 'origin') + (withJump ? '<button class="link" data-jump="' + v.origin + '">定位原句 →</button>' : '') + '</div>' +
         '<p class="blk-en">' + esc(o.en) + '</p>' +
         (o.cn ? '<p class="blk-cn">' + esc(o.cn) + '</p>' : '') + '</div>';
     }
@@ -283,7 +295,7 @@
     }
 
     var counts = { known: 0, fuzzy: 0, new: 0 };
-    var lemmas = {};
+    var lemmas = Object.create(null);
     ch.vocab.forEach(function (v) {
       if (lemmas[v.lemma]) return;
       lemmas[v.lemma] = 1;
@@ -318,20 +330,23 @@
       return;
     }
 
-    var cards = rows.map(function (v) {
+    var groups = new Map();
+    rows.forEach(function (v) { if (!groups.has(v.lemma)) groups.set(v.lemma, []); groups.get(v.lemma).push(v); });
+    var cards = Array.from(groups.values()).map(function (senses) {
+      var v = senses[0];
       var st = statusOf(v.lemma);
       return '<article class="card" data-w="' + esc(v.lemma) + '" data-status="' + st + '">' +
         '<div class="card-top">' +
           '<span class="card-w">' + esc(v.w) + '</span>' +
           '<span class="card-ipa">' + esc(v.ipa || '') + '</span>' +
-          '<span class="card-pos">' + esc(v.pos) + '</span>' +
         '</div>' +
-        '<p class="card-def">' + esc(v.def) + '</p>' +
-        originBlock(v, true) +
-        (v.ex ? '<div class="blk"><div class="blk-h">造句</div>' +
-             '<p class="blk-en">' + esc(v.ex.en) + '</p>' +
-             '<p class="blk-cn">' + esc(v.ex.cn) + '</p>' +
-             (v.ex.note ? '<p class="blk-note">' + esc(v.ex.note) + '</p>' : '') + '</div>' : '') +
+        senses.map(function (sense) {
+          return '<div class="vocab-sense"><p class="card-def"><i>' + esc(sense.pos) + '</i> ' + esc(sense.def) + '</p>' +
+            originBlock(sense, true) +
+            (sense.ex ? '<div class="blk"><div class="blk-h">造句' + speakLink(sense.ex.en, '朗读造句', 'example') + '</div>' +
+              '<p class="blk-en">' + esc(sense.ex.en) + '</p><p class="blk-cn">' + esc(sense.ex.cn) + '</p>' +
+              (sense.ex.note ? '<p class="blk-note">' + esc(sense.ex.note) + '</p>' : '') + '</div>' : '') + '</div>';
+        }).join('') +
         '<div class="card-foot">' +
           '<div class="rates">' +
             ['new:生疏', 'fuzzy:模糊', 'known:掌握'].map(function (x) {
@@ -348,41 +363,44 @@
   }
 
   /* ---------- 渲染：闪卡 ---------- */
-  var cardQueue = [], cardAt = 0, cardFlipped = false;
+  var cardQueue = [], cardAt = 0, cardFlipped = false, cardChapter, cardTotal = 0, lastCardOrder = [];
+  var vocabReturn = null;
 
-  function buildQueue(ch) {
-    var list = ch.vocab.filter(function (v) { return v.lemma; });
-    var seen = {};
-    list = list.filter(function (v) {
-      if (seen[v.lemma]) return false; seen[v.lemma] = 1; return true;
+  function restoreCardPos(ch, all) {
+    var seen = new Set();
+    var queue = ch.vocab.filter(function (v) {
+      if (!v.lemma || seen.has(v.lemma) || (!all && statusOf(v.lemma) === 'known')) return false;
+      seen.add(v.lemma);
+      return true;
     });
-    // 掌握度低的排前面
-    list.sort(function (a, b) {
-      var order = { new: 0, fuzzy: 1, known: 2 };
-      return order[statusOf(a.lemma)] - order[statusOf(b.lemma)];
-    });
-    return list;
+    for (var i = queue.length - 1; i > 0; --i) {
+      var j = Math.floor(Math.random() * (i + 1));
+      [queue[i], queue[j]] = [queue[j], queue[i]];
+    }
+    if (queue.length > 1 && queue.every(function (v, i) { return v.lemma === lastCardOrder[i]; }))
+      queue.push(queue.shift());
+    lastCardOrder = queue.map(function (v) { return v.lemma; });
+    cardChapter = ch.id;
+    cardQueue = queue; cardAt = 0; cardTotal = queue.length; cardFlipped = false;
   }
 
-  function restoreCardPos(ch, keepLemma) {
-    cardQueue = buildQueue(ch);
-    var at = (state.cardAt || {})[ch.id];
-    if (keepLemma) {
-      // 队列会按掌握度重排，尽量把用户停在原来那张卡上
-      var i = -1;
-      for (var k = 0; k < cardQueue.length; k++) {
-        if (cardQueue[k].lemma === keepLemma) { i = k; break; }
-      }
-      if (i >= 0) { cardAt = i; return; }
-    }
-    cardAt = (typeof at === 'number' && at < cardQueue.length) ? at : 0;
+  function playCard() {
+    var v = cardQueue[cardAt];
+    if (v && state.cardAudio !== false) speakItems([{text:v.lemma}, {text:v.ex?.en || ''}]);
+    else stopSpeech();
   }
 
   function renderCards(ch) {
-    if (!cardQueue.length) cardQueue = buildQueue(ch);
+    if (cardChapter !== ch.id) restoreCardPos(ch, false);
     var v = cardQueue[cardAt];
     var wrap = $('#view-cards');
-    if (!v) { wrap.innerHTML = '<div class="empty">本章没有可练习的词条</div>'; return; }
+    if (!v) {
+      var remaining = ch.vocab.some(v => statusOf(v.lemma) !== 'known');
+      wrap.innerHTML = '<div class="empty"><p>' + (remaining ? '本轮闪卡已经完成。' : '本章词汇已全部标为掌握。') + '</p>' +
+        (remaining ? '<button class="btn primary-study" data-retry-cards>再练未掌握词</button> ' : '') +
+        '<button class="btn" data-restart>全部重来</button></div>';
+      return;
+    }
 
     var o = v.origin != null ? flatIdx[v.origin] : null;
     var st = statusOf(v.lemma);
@@ -396,18 +414,20 @@
       '<div class="fc-top">' +
         '<div class="fc-nav">' +
           '<button class="fc-navbtn" data-nav="-1" aria-label="上一张" title="上一张（←）">‹</button>' +
-          '<span class="fc-idx">' + (cardAt + 1) + ' / ' + cardQueue.length + '</span>' +
+          '<span class="fc-idx">已练 ' + (cardTotal - cardQueue.length) + ' / ' + cardTotal + ' · 待练 ' + cardQueue.length + '</span>' +
           '<button class="fc-navbtn" data-nav="1" aria-label="下一张" title="下一张（→）">›</button>' +
         '</div>' +
         '<span class="fc-idx">' + esc(ch.titleCn) + ' · ' +
-          '<button class="fc-restart" data-restart title="从第一张重新开始">重头开始</button></span>' +
+          '<button class="fc-restart" data-card-audio aria-pressed="' + (state.cardAudio !== false) + '">' + (state.cardAudio !== false ? '自动朗读开' : '自动朗读关') + '</button> · ' +
+          '<button class="fc-restart" data-restart title="打乱顺序，包含已掌握词，不清空历史">全部重来</button></span>' +
       '</div>' +
-      '<div class="fc-stage"><div class="fc" id="fcCard">' +
+      '<div class="fc-stage"><div class="fc" id="fcCard" tabindex="0" aria-label="闪卡，按空格翻面">' +
         '<div class="fc-face fc-fw">' +
           '<div class="fc-word">' + esc(v.w) + '</div>' +
           (v.ipa ? '<div class="fc-ipa">' + esc(v.ipa) + '</div>' : '') +
           '<div class="fc-pos">' + esc(v.pos) + '</div>' +
-          '<button class="btn" data-speak="' + esc(v.w) + '">&#9835; 朗读</button>' +
+          (v.ex?.en ? '<p class="fc-example">' + esc(v.ex.en) + '</p>' : '') +
+          '<button class="btn" data-card-play>朗读单词和造句</button>' +
           (occ ? '<div class="fc-occ">本篇出现 ' + occ + ' 次</div>' : '') +
           '<div class="fc-flip">点击卡片翻面</div>' +
         '</div>' +
@@ -433,19 +453,18 @@
     if (!cardQueue.length) return;
     cardAt = (cardAt + delta + cardQueue.length) % cardQueue.length;
     cardFlipped = false;
-    if (!state.cardAt) state.cardAt = {};
-    state.cardAt[state.chapter] = cardAt;
-    save();
-    renderCards(current);
+    renderCards(current); playCard();
   }
 
   function nextCard(rate) {
-    if (rate) {
-      var v = cardQueue[cardAt];
-      if (v && cardFlipped) setStatus(v.lemma, rate, true);
-      else if (v) { flipCard(); return; }
-    }
-    goCard(1);
+    var v = cardQueue[cardAt];
+    if (!v) return;
+    setStatus(v.lemma, rate, true);
+    // Each score finishes one card in this round; a new round shuffles again.
+    cardQueue.splice(cardAt, 1);
+    if (cardAt >= cardQueue.length) cardAt = 0;
+    cardFlipped = false;
+    renderCards(current); playCard();
   }
 
   /* ---------- 词条浮层 ---------- */
@@ -494,70 +513,95 @@
     pop.dataset.lemma = lemma;
     pop.innerHTML = html;
     pop.hidden = false;
+    pop.scrollTop = 0;
+    speak(v.w, $('.pop-speak', pop));
 
-    if (window.innerWidth <= 600) { pop.style.left = ''; pop.style.top = ''; return; }
-    var main = $('#main');
-    var mr = main.getBoundingClientRect();
+    pop.style.left = ''; pop.style.top = ''; pop.style.maxHeight = '';
+    if (window.innerWidth <= 600) return;
     var r = anchor.getBoundingClientRect();
-    if (!r.width && !r.height) { pop.hidden = true; return; }
-    pop.style.left = '0px'; pop.style.top = '0px';
+    var topLimit = $('.topbar').getBoundingClientRect().bottom + 8;
+    var bottomLimit = window.innerHeight - 10;
+    pop.style.maxHeight = Math.max(100, bottomLimit - topLimit) + 'px';
     var pw = pop.offsetWidth, ph = pop.offsetHeight;
-
-    var left = r.left - mr.left - 10;
-    var top = r.bottom - mr.top + 8;
-    var below = true;
-    if (left + pw > window.innerWidth - mr.left - 14) left = window.innerWidth - mr.left - pw - 14;
-    if (left < 8) left = 8;
-    if (top + ph > window.innerHeight - 14) {
-      top = r.top - mr.top - ph - 8;
-      below = false;
-    }
-    if (top < 8) { top = 8; below = true; }
-    pop.style.left = left + 'px';
-    pop.style.top = top + 'px';
-
-    // 指向被点击的那个词
-    var cx = r.left + r.width / 2 - mr.left - left;
-    var ar = document.createElement('span');
-    ar.className = 'pop-arrow ' + (below ? 'up' : 'down');
-    ar.style.left = Math.max(16, Math.min(pw - 16, cx)) + 'px';
-    pop.appendChild(ar);
+    var below = r.bottom + 10, above = r.top - ph - 10;
+    var left = Math.max(10, Math.min(window.innerWidth - pw - 10, r.left - 12));
+    var top = below + ph <= bottomLimit ? below : above >= topLimit ? above : Math.max(topLimit, bottomLimit - ph);
+    pop.style.left = left + 'px'; pop.style.top = top + 'px';
+    pop.scrollTop = 0;
   }
   function closePop() { $('#pop').hidden = true; }
 
   /* ---------- 朗读 ---------- */
-  var speech = { token: 0, btn: null };
+  var speech = { token: 0 };
+  var synth = window.speechSynthesis;
+  var nativeSpeech = action => window.chrome.webview.postMessage('speech:' + action);
+  var speechStep = 0, onNativeSpeechDone;
+  if (window.wordYarnDesktop) window.wordYarnSpeechResult = function (id, ok, audio) {
+    if (id === speechStep && onNativeSpeechDone) onNativeSpeechDone(ok, audio);
+  };
+  var speechVoices = function () { return (synth?.getVoices() || []).filter(v => /^en/i.test(v.lang)); };
+  var voiceVolume = () => state.voiceVolume ?? (window.wordYarnDesktop && !state.voice ? 125 : 100);
 
   function pickVoice() {
-    var vs = speechSynthesis.getVoices() || [];
-    return vs.filter(function (x) { return /^en[-_]US/i.test(x.lang); })[0] ||
-           vs.filter(function (x) { return /^en[-_]GB/i.test(x.lang); })[0] ||
-           vs.filter(function (x) { return /^en/i.test(x.lang); })[0] || null;
+    var voices = speechVoices();
+    var preferred = voices.find(v => v.voiceURI === state.voice);
+    if (preferred) return preferred;
+    var offline = voices.filter(v => v.localService !== false);
+    return offline.find(v => /natural|neural|enhanced|premium/i.test(v.name)) ||
+      offline.find(v => /^en-US/i.test(v.lang) && /google|aria|jenny|guy/i.test(v.name)) ||
+      offline.find(v => /^en-US/i.test(v.lang)) || offline[0] || null;
   }
 
-  function speak(text, btn) {
-    if (!('speechSynthesis' in window)) { toast('此浏览器不支持朗读'); return; }
-    try { speechSynthesis.cancel(); } catch (e) {}
-    var u = new SpeechSynthesisUtterance(String(text));
-    u.lang = 'en-US'; u.rate = 0.92; u.pitch = 1;
-    var v = pickVoice(); if (v) u.voice = v;
-    u.onend = function () { clearKaraoke(); };
-    u.onerror = function () { clearKaraoke(); };
-    speechSynthesis.speak(u);
-    if (btn) { $$('.speak.is-on').forEach(function (b) { b.classList.remove('is-on'); }); btn.classList.add('is-on'); }
+  function renderVoiceChoices() {
+    var sel = $('#voiceChoice'), voices = speechVoices();
+    sel.replaceChildren(new Option(voices.length ? '自动选择 · 优先离线' : window.wordYarnDesktop ? 'Windows 本地音色' : '自动选择 · 设备默认', ''));
+    for (var voice of voices) sel.append(new Option(voice.name + ' · ' + voice.lang + (voice.localService === false ? '（联网）' : ''), voice.voiceURI));
+    sel.value = voices.some(v => v.voiceURI === state.voice) ? state.voice : '';
+    $('#voiceRate').value = state.voiceRate || '0.94';
+    $('#voiceVolume').max = window.wordYarnDesktop && !sel.value ? 150 : 100;
+    $('#voiceBoostHelp').hidden = !window.wordYarnDesktop || Boolean(sel.value);
+    $('#voiceVolume').value = voiceVolume();
+    $('#voiceVolumeValue').textContent = $('#voiceVolume').value + '%';
+    $('#voiceMixer').hidden = !window.wordYarnDesktop;
   }
+  synth?.addEventListener('voiceschanged', renderVoiceChoices);
+  $('#voiceSettings').addEventListener('click', () => { renderVoiceChoices(); $('#voiceDialog').showModal(); });
+  $('#voiceChoice').addEventListener('change', e => { state.voice = e.target.value; save(); });
+  $('#voiceRate').addEventListener('change', e => { state.voiceRate = e.target.value; save(); });
+  $('#voiceVolume').addEventListener('input', e => {
+    state.voiceVolume = Number(e.target.value);
+    $('#voiceVolumeValue').textContent = state.voiceVolume + '%';
+    save();
+  });
+  $('#voiceMixer').addEventListener('click', () => window.chrome.webview.postMessage('window:mixer'));
+  $('#voicePreview').addEventListener('click', () => speak('The train from the south pulled into Haizhou at ten past seven.'));
+
+  function speak(text, btn) { speakItems([{text: String(text)}], btn); }
 
   function stopSpeech() {
     speech.token++;
-    try { speechSynthesis.cancel(); } catch (e) {}
+    if (speech.btn) {
+      if (speech.label) {
+        speech.btn.textContent = speech.label;
+        speech.btn.setAttribute('aria-label', speech.label);
+      }
+      speech.btn.classList.remove('is-on');
+      speech.btn.removeAttribute('aria-pressed');
+    }
+    if (speech.progress) speech.progress.hidden = true;
+    speech.btn = speech.label = speech.progress = speech.utterance = null;
+    speech.paused = false;
+    speech.resumeNext = null;
+    if (speech.audio) { speech.audio.pause(); speech.audio.removeAttribute('src'); speech.audio = null; }
+    if (onNativeSpeechDone) { onNativeSpeechDone = null; nativeSpeech('stop'); }
+    speech.native = false;
+    if (synth) { synth.cancel(); if (synth.paused) synth.resume(); }
     clearKaraoke();
   }
 
   function clearKaraoke() {
-    var k = document.querySelector('.karaoke');
-    if (k && k.parentNode) k.parentNode.removeChild(k);
-    $$('.srow.is-speaking').forEach(function (r) { r.classList.remove('is-speaking'); });
-    $$('.speak.is-on').forEach(function (b) { b.classList.remove('is-on'); });
+    $$('.karaoke').forEach(k => k.remove());
+    $$('.srow.is-speaking').forEach(r => r.classList.remove('is-speaking'));
   }
 
   /* 在 el 里给 [start, start+len) 这段文字铺一块高亮 */
@@ -597,43 +641,113 @@
     host.appendChild(k);
   }
 
-  /* 连续朗读一组句子，边读边逐词高亮 */
+  // Speak individual sentences in sequence: progress advances even on voices
+  // that provide no word boundary events.
   function speakItems(items, btn) {
-    if (!('speechSynthesis' in window)) { toast('此浏览器不支持朗读'); return; }
-    stopSpeech();
-    var token = speech.token;
-    var full = '', offs = [];
-    items.forEach(function (it, i) {
-      offs.push({ start: full.length, end: full.length + it.text.length, item: it });
-      full += it.text;
-      if (i < items.length - 1) full += ' ';
-    });
-    if (!full) return;
-
-    var u = new SpeechSynthesisUtterance(full);
-    u.lang = 'en-US'; u.rate = 0.92; u.pitch = 1;
-    var v = pickVoice(); if (v) u.voice = v;
-
-    u.onboundary = function (e) {
-      if (token !== speech.token) return;
-      var idx = e.charIndex || 0, len = e.charLength || 0;
-      if (!len) { var mm = /^\S+/.exec(full.slice(idx)); len = mm ? mm[0].length : 1; }
-      var cur = null;
-      for (var i = 0; i < offs.length; i++) {
-        if (idx >= offs[i].start && idx < offs[i].end) { cur = offs[i]; break; }
+    if ((!synth || !window.SpeechSynthesisUtterance) && !window.wordYarnDesktop) { toast('当前设备不支持朗读'); return; }
+    var para = btn?.matches('[data-say-para]') ? btn.closest('.para') : null;
+    if (para && speech.btn === btn) {
+      speech.paused = !speech.paused;
+      if (speech.audio) {
+        if (speech.paused) speech.audio.pause();
+        else speech.audio.play().catch(() => { stopSpeech(); toast('无法播放增强语音'); });
+      } else if (speech.native) nativeSpeech(speech.paused ? 'pause' : 'resume');
+      else if (speech.paused) synth.pause(); else synth.resume();
+      btn.textContent = speech.paused ? '继续播放' : '暂停';
+      btn.setAttribute('aria-label', btn.textContent);
+      btn.setAttribute('aria-pressed', String(!speech.paused));
+      if (!speech.paused && speech.resumeNext) {
+        var resumeNext = speech.resumeNext;
+        speech.resumeNext = null;
+        resumeNext();
       }
-      if (!cur) cur = offs[offs.length - 1];
-      var it = cur.item;
-      var row = it.host.closest ? it.host.closest('.srow') : null;
-      $$('.srow.is-speaking').forEach(function (r) { r.classList.remove('is-speaking'); });
-      if (row) row.classList.add('is-speaking');
-      paintWord(it.host, it.textEl, idx - cur.start, len);
-    };
-    u.onend = function () { if (token !== speech.token) return; clearKaraoke(); };
-    u.onerror = function () { if (token !== speech.token) return; clearKaraoke(); };
-
-    speechSynthesis.speak(u);
-    if (btn) { $$('.speak.is-on').forEach(function (b) { b.classList.remove('is-on'); }); btn.classList.add('is-on'); }
+      return;
+    }
+    stopSpeech();
+    items = items.filter(it => it.text);
+    if (!items.length) return;
+    var token = speech.token;
+    speech.btn = btn || null;
+    speech.progress = para?.querySelector('.para-playback');
+    if (btn) btn.classList.add('is-on');
+    if (para) {
+      speech.label = btn.textContent;
+      btn.textContent = '暂停';
+      btn.setAttribute('aria-label', btn.textContent);
+      btn.setAttribute('aria-pressed', 'true');
+      speech.progress.hidden = false;
+    }
+    var voice = pickVoice();
+    speech.native = Boolean(window.wordYarnDesktop &&
+      (!voice || !window.SpeechSynthesisUtterance || (!state.voice && voiceVolume() > 100)));
+    function next(i) {
+      if (token !== speech.token) return;
+      if (speech.paused) { speech.resumeNext = () => next(i); return; }
+      clearKaraoke();
+      if (i >= items.length) {
+        if (speech.progress) {
+          var panel = speech.progress;
+          stopSpeech();
+          panel.hidden = false;
+          panel.querySelector('progress').value = items.length;
+          panel.querySelector('span').textContent = '播放完成';
+        } else stopSpeech();
+        return;
+      }
+      var it = items[i];
+      function progress(f) {
+        if (!speech.progress) return;
+        var meter = speech.progress.querySelector('progress');
+        meter.max = items.length;
+        meter.value = i + f;
+        speech.progress.querySelector('span').textContent = (i + 1) + ' / ' + items.length + ' 句';
+      }
+      progress(0);
+      if (speech.native) {
+        it.host?.closest('.srow')?.classList.add('is-speaking');
+        onNativeSpeechDone = function (ok, audio) {
+          if (token !== speech.token) return;
+          if (ok && audio) {
+            var clip = new Audio('data:audio/wav;base64,' + audio);
+            speech.audio = clip;
+            clip.onended = () => { if (token === speech.token) { speech.audio = null; next(i+1); } };
+            clip.onerror = () => { if (token === speech.token) { stopSpeech(); toast('无法播放增强语音'); } };
+            clip.ontimeupdate = () => { if (token === speech.token && clip.duration) progress(Math.min(.99, clip.currentTime / clip.duration)); };
+            if (!speech.paused) clip.play().catch(() => { if (token === speech.token && !speech.paused) { stopSpeech(); toast('无法播放增强语音'); } });
+          } else if (ok) next(i + 1);
+          else { stopSpeech(); toast('找不到可用的英语语音，请检查 Windows 语音设置'); }
+        };
+        var speed = Math.round((Number(state.voiceRate || 0.94) - 1) * 10);
+        nativeSpeech('play:' + (++speechStep) + ':' + speed + ':' + voiceVolume() + ':' + it.text.slice(0,1800));
+        return;
+      }
+      var u = new SpeechSynthesisUtterance(it.text);
+      speech.utterance = u;
+      u.lang = voice?.lang || 'en-US';
+      if (voice) u.voice = voice;
+      u.rate = Number(state.voiceRate || 0.94);
+      u.volume = Math.min(100, voiceVolume()) / 100;
+      u.pitch = 1;
+      u.onstart = function () {
+        if (token === speech.token) it.host?.closest('.srow')?.classList.add('is-speaking');
+      };
+      u.onboundary = function (e) {
+        if (token !== speech.token) return;
+        var idx = e.charIndex || 0, len = e.charLength || (/^\S+/.exec(it.text.slice(idx))?.[0].length || 1);
+        progress(Math.min(0.99, idx / it.text.length));
+        if (it.host && it.textEl) paintWord(it.host, it.textEl, idx, len);
+      };
+      u.onend = function () { next(i + 1); };
+      u.onerror = function (e) {
+        if (token !== speech.token) return;
+        stopSpeech();
+        if (!['canceled','interrupted'].includes(e.error))
+          toast(e.error === 'not-allowed' ? '请点击朗读按钮启用声音' : '无法朗读，请在朗读设置中更换音色');
+      };
+      synth.speak(u);
+    }
+    $$('.para-playback').forEach(p => { if (p !== speech.progress) p.hidden = true; });
+    next(0);
   }
 
   function sentenceItem(gi) {
@@ -696,23 +810,24 @@
 
   /* ---------- 视图切换 ---------- */
   function setView(v, silent) {
+    $('#vocabReturn')?.setAttribute('hidden', '');
     state.view = v; save(); closePop(); stopSpeech();
     $$('.tab').forEach(function (t) {
       var on = t.dataset.view === v;
       t.classList.toggle('is-active', on);
       t.setAttribute('aria-selected', on ? 'true' : 'false');
     });
-    ['read', 'vocab', 'cards', 'today', 'dictionary'].forEach(function (x) { $('#view-' + x).hidden = (x !== v); });
+    ['read', 'vocab', 'cards', 'today', 'dictionary', 'profile'].forEach(function (x) { $('#view-' + x).hidden = (x !== v); });
     if (current) {
       if (v === 'vocab') renderVocab(current);
       if (v === 'cards') {
-        var keep = cardQueue[cardAt] ? cardQueue[cardAt].lemma : null;
-        restoreCardPos(current, keep);
+        restoreCardPos(current, false);
         renderCards(current);
+        if (!silent || window.wordYarnDesktop) playCard();
       }
     }
     if (!silent) syncHash();
-    if (v === 'today') { study.render(); study.sync(); }
+    if (v === 'today' || v === 'profile') { study.render(); study.sync(); }
     if (v === 'dictionary' && !isNarrow()) $('#globalQuery').focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   }
@@ -727,13 +842,14 @@
     var id = m[1], v = m[2] || 'read';
     var ok = manifest.some(function (x) { return x.id === id; });
     if (!ok) return null;
-    if (['read', 'vocab', 'cards', 'today', 'dictionary'].indexOf(v) < 0) v = 'read';
+    if (['read', 'vocab', 'cards', 'today', 'dictionary', 'profile'].indexOf(v) < 0) v = 'read';
     return { chapter: id, view: v };
   }
 
   function showChapter(id, silent) {
     var version = ++chapterVersion;
     if (readingObserver) readingObserver.disconnect();
+    vocabReturn = null; stopSpeech();
     state.chapter = id; save();
     closePop();
     return loadChapter(id).then(function (ch) {
@@ -742,10 +858,12 @@
       buildIndex(ch);
       renderTop();
       renderSidebar();
+      // Start every opened chapter in bilingual mode. Toggles still work while reading it.
+      state.open[ch.id] = {};
       renderRead(ch);
       observeReading(ch, version);
       if (state.view === 'vocab') renderVocab(ch);
-      if (state.view === 'cards') { restoreCardPos(ch, null); renderCards(ch); }
+      if (state.view === 'cards') { restoreCardPos(ch, false); renderCards(ch); if (!silent || window.wordYarnDesktop) playCard(); }
       if (!silent) syncHash();
     }).catch(function (err) {
       if (version !== chapterVersion) return;
@@ -789,10 +907,11 @@
     if (st) st.textContent = '逐句对照';
     var tg = $('.para-toggle', para);
     if (tg) tg.setAttribute('aria-expanded', 'true');
+    $$('.srow.is-flash').forEach(row => row.classList.remove('is-flash'));
     setTimeout(function () {
       var row = $('.srow[data-gi="' + gi + '"]', para);
       if (!row) return;
-      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'center' });
       row.classList.remove('is-flash');
       void row.offsetWidth;
       row.classList.add('is-flash');
@@ -815,12 +934,19 @@
     // 闪卡翻页
     var nav = t.closest('[data-nav]');
     if (nav) { goCard(+nav.dataset.nav); return; }
-    if (t.closest('[data-restart]')) { cardAt = 0; goCard(0); return; }
+    if (t.closest('[data-restart]') && current) { restoreCardPos(current, true); goCard(0); return; }
+    if (t.closest('[data-retry-cards]') && current) { restoreCardPos(current, false); goCard(0); return; }
+    if (t.closest('[data-card-play]')) {
+      var cv = cardQueue[cardAt];
+      if (cv) speakItems([{text:cv.lemma}, {text:cv.ex?.en || ''}]);
+      return;
+    }
+    if (t.closest('[data-card-audio]')) { state.cardAudio = state.cardAudio === false; save(); goCard(0); return; }
 
     // 侧栏章节
     var chBtn = t.closest('.ch-item');
     if (chBtn) {
-      if (state.view === 'today' || state.view === 'dictionary') setView('read', true);
+      if (state.view === 'today' || state.view === 'dictionary' || state.view === 'profile') setView('read', true);
       showChapter(chBtn.dataset.ch);
       if (isNarrow()) toggleNav(false);
       return;
@@ -871,7 +997,21 @@
 
     // 定位
     var jump = t.closest('[data-jump]');
-    if (jump) { jumpTo(+jump.dataset.jump); return; }
+    if (jump) {
+      var cardEntry = jump.closest('.card');
+      vocabReturn = { chapter: state.chapter, y: window.scrollY, lemma: cardEntry?.dataset.w };
+      jumpTo(+jump.dataset.jump);
+      $('#vocabReturn').hidden = false;
+      return;
+    }
+    if (t.closest('[data-vocab-return]') && vocabReturn) {
+      var previous = vocabReturn; vocabReturn = null;
+      setView('vocab');
+      window.scrollTo(0, previous.y);
+      var anchor = $$('.card').find(function (c) { return c.dataset.w === previous.lemma; });
+      anchor?.querySelector('[data-jump]')?.focus({preventScroll:true});
+      return;
+    }
 
     // 朗读
     var sp = t.closest('[data-speak]');
@@ -924,6 +1064,7 @@
     if ($('#studyExercise').open || e.target.closest('input, textarea, select, [contenteditable]')) return;
     if (state.view === 'cards' && !e.metaKey && !e.ctrlKey && !e.altKey) {
       if (/^[1-3]$/.test(e.key)) {
+        if (e.repeat) return;
         var map = { '1': 'new', '2': 'fuzzy', '3': 'known' };
         nextCard(map[e.key]);
         return;
@@ -986,14 +1127,21 @@
   renderSidebar();
   $('#chList').addEventListener('scroll', updateSideScroll, { passive: true });
   window.addEventListener('resize', updateSideScroll);
+  compactNav.addEventListener('change', () => { drawerOpen = false; applyNav(); });
   document.addEventListener('click', function (e) {
-    if (!isNarrow() || state.nav === 'closed') return;
+    if (!isNarrow() || !drawerOpen) return;
     if (e.target.closest('#sidebar') || e.target.closest('#btnNav')) return;
     toggleNav(false);
   }, true);
   study = window.createStudy({
     $: $, esc: esc, state: state, manifest: manifest, load: loadChapter,
     save: save, toast: toast, refresh: renderSidebar, go: goStudy,
+    speak: speak, stopSpeech: stopSpeech,
+    openVocab: async function (chapter) {
+      state.query = ''; state.filter = 'all';
+      if (current?.id !== chapter) await showChapter(chapter, true);
+      if (current?.id === chapter) setView('vocab');
+    },
     current: function () { return current; }
   });
   var h = readHash();
@@ -1003,6 +1151,40 @@
   showChapter(state.chapter, true).then(function () {
     syncHash();
   });
+  window.addEventListener('resize', closePop);
+  if (window.wordYarnDesktop) {
+    var titleBar = $('#desktopTitle');
+    titleBar.hidden = false;
+    document.documentElement.classList.add('desktop-app');
+    var windowAction = action => window.chrome.webview.postMessage('window:' + action);
+    titleBar.addEventListener('click', e => { var button = e.target.closest('[data-window]'); if (button) windowAction(button.dataset.window); });
+    titleBar.addEventListener('dblclick', e => {
+      if (!e.target.closest('button')) windowAction('fullscreen');
+    });
+    var dragStart;
+    titleBar.addEventListener('pointerdown', e => {
+      if (e.button === 0 && titleBar.dataset.fullscreen === 'false' && !e.target.closest('button'))
+        dragStart = { x: e.screenX, y: e.screenY };
+    });
+    titleBar.addEventListener('pointermove', e => {
+      if (!(e.buttons & 1)) { dragStart = null; return; }
+      if (dragStart && Math.hypot(e.screenX - dragStart.x, e.screenY - dragStart.y) >= 6) {
+        dragStart = null;
+        windowAction('move');
+      }
+    });
+    titleBar.addEventListener('pointerup', () => { dragStart = null; });
+    titleBar.addEventListener('pointercancel', () => { dragStart = null; });
+    window.addEventListener('keydown', e => { if (e.key === 'F11') { e.preventDefault(); windowAction('fullscreen'); } });
+    window.wordYarnWindowState = function (full) {
+      var button = $('[data-window=fullscreen]');
+      titleBar.dataset.fullscreen = String(full);
+      var label = full ? '退出全屏' : '进入全屏';
+      button.setAttribute('aria-label', label); button.title = label + '（F11）';
+      button.textContent = full ? '⧉' : '□';
+    };
+    window.wordYarnWindowState(true);
+  }
   window.addEventListener('hashchange', function () {
     var x = readHash();
     if (!x) return;

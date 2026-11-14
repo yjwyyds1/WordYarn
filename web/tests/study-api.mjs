@@ -65,9 +65,22 @@ test('study data survives a restart and only due words enter the queue', async (
     await api('review', { ...later, attempt: 'offline-1', reviewedAt: now - 172800 });
     await api('review', { ...later, attempt: 'offline-2', reviewedAt: now - 86400 });
     const replayed = await api('study');
+    assert.equal(Object.values(replayed.activity).reduce((a, b) => a + b, 0), 3);
     assert.equal(replayed.remembered, 1);
     assert.equal(replayed.words.find(w => w.lemma === 'context').dueAt, now + 172800);
     assert.equal((await api('history'))[0].reviewedAt, now - 86400);
+    const marks = { chapter: 'ch04', lemma: 'memory' };
+    const steps = [0, 1, 4, 11, 26].map(days => now - (27 - days) * 86400);
+    for (const [i,time] of steps.entries()) {
+      const response = await api('review', { ...marks, rating: 'known', attempt: 'long-' + i, reviewedAt: time });
+      assert.equal(response.dueAt, time + [1,3,7,15,30][i] * 86400);
+    }
+    const early = await api('review', {...marks,rating:'known',attempt:'early',reviewedAt:now});
+    assert.equal(early.dueAt,steps.at(-1) + 30 * 86400);
+    const wrong = await api('review', {...marks,rating:'new',attempt:'wrong',reviewedAt:now});
+    assert.equal(wrong.dueAt,now + 600);
+    const fuzzy = await api('review', {...marks,rating:'fuzzy',attempt:'fuzzy',reviewedAt:now});
+    assert.equal(fuzzy.dueAt,now + 12 * 3600);
   } finally {
     await stop();
     await rm(dir, { recursive: true, force: true });

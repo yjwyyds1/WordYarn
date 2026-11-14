@@ -6,10 +6,19 @@
 <title>词汇故事集 · 精读与背词</title>
 <meta name="description" content="四级词汇故事集：逐句中英对照精读 + 目标词造句 + 闪卡自测">
 <link rel="stylesheet" href="assets/css/app.css">
+<link rel="icon" href="assets/wordyarn.svg" type="image/svg+xml">
 </head>
 <body>
 <div class="grain" aria-hidden="true"></div>
 
+<div class="desktop-title" id="desktopTitle" hidden>
+  <span class="desktop-brand"><img src="assets/wordyarn.svg" alt="">WORDYARN <small>四级词汇故事集</small></span>
+  <div class="desktop-actions">
+    <button data-window="minimize" aria-label="最小化" title="最小化">−</button>
+    <button data-window="fullscreen" aria-label="退出全屏" title="退出全屏（F11）">⧉</button>
+    <button data-window="close" aria-label="关闭软件" title="关闭软件">×</button>
+  </div>
+</div>
 <header class="topbar">
   <button class="nav-toggle" id="btnNav" title="目录" aria-label="展开目录">
     <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
@@ -38,9 +47,11 @@
     <button class="tab" role="tab" data-view="vocab" aria-selected="false">词表</button>
     <button class="tab" role="tab" data-view="cards" aria-selected="false">闪卡</button>
     <button class="tab" role="tab" data-view="dictionary" aria-selected="false">查词</button>
+    <button class="tab" role="tab" data-view="profile" aria-selected="false">统计</button>
   </nav>
 
   <div class="tools">
+    <button class="tool" id="voiceSettings" aria-label="朗读设置" title="朗读设置">♫</button>
     <button class="tool" id="btnSmaller" title="缩小字号" aria-label="A− 缩小字号">A<span class="tool-sm">−</span></button>
     <button class="tool" id="btnBigger" title="放大字号" aria-label="A+ 放大字号">A<span class="tool-sm">+</span></button>
     <button class="tool" id="btnTheme" title="切换昼夜" aria-label="夜 切换昼夜"><span id="themeChar">夜</span></button>
@@ -69,7 +80,7 @@
       <header class="study-heading"><div class="kicker">THE READING ROOM</div><h1>今天学什么</h1><p>读一段故事，记住几个词。</p></header>
       <div class="study-grid">
         <article class="study-panel"><span class="study-index">01 / 阅读</span><h2>接着读故事</h2><p id="continueDetail"></p><button id="continueStudy" class="btn primary-study">开始阅读</button></article>
-        <article class="study-panel"><span class="study-index">02 / 复习</span><h2><span id="dueCount">0</span> 个词待复习</h2><p>每组最多 10 个词，回到故事原句练习。</p><button id="startDue" class="btn">开始复习</button></article>
+        <article class="study-panel"><span class="study-index">02 / 听写</span><h2><span id="dueCount">0</span> 个词待复习</h2><p>看中文、听发音，写出英文单词。每组最多 10 个。</p><button id="startDue" class="btn">开始听写</button></article>
       </div>
       <div class="study-meta"><p id="reviewSummary"></p><p id="studyConnection" role="status"></p><button id="historyStudy" class="btn" hidden>查看答题历史</button><div id="studyHistory" hidden></div></div>
     </section>
@@ -81,13 +92,29 @@
     <section class="view" id="view-read" aria-label="精读"></section>
     <section class="view" id="view-vocab" hidden aria-label="词表"></section>
     <section class="view" id="view-cards" hidden aria-label="闪卡"></section>
+    <section class="view study-view" id="view-profile" hidden aria-label="学习统计"></section>
     <div class="pop" id="pop" hidden role="dialog" aria-label="词条详情"></div>
   </main>
 </div>
 
 <dialog class="study-dialog" id="studyExercise" aria-labelledby="exerciseTitle">
   <form method="dialog" class="study-dialog-head"><h2 id="exerciseTitle">原句练习</h2><button class="btn" aria-label="关闭练习">关闭</button></form>
+  <p id="nextReviewReceipt" class="review-next" role="status" hidden></p>
   <div class="exercise-content"></div>
+</dialog>
+<dialog class="study-dialog" id="voiceDialog" aria-labelledby="voiceTitle">
+  <form method="dialog" class="study-dialog-head"><h2 id="voiceTitle">朗读设置</h2><button class="btn">关闭</button></form>
+  <label class="voice-field">英语音色 <select id="voiceChoice"></select></label>
+  <label class="voice-field">语速 <select id="voiceRate">
+    <option value="0.8">慢速</option><option value="0.94">清晰</option><option value="1">自然</option><option value="1.12">快速</option>
+  </select></label>
+  <label class="voice-field voice-volume"><span>朗读音量 <output id="voiceVolumeValue" for="voiceVolume">100%</output></span>
+    <input id="voiceVolume" type="range" min="0" max="100" step="1" value="100">
+  </label>
+  <p class="study-muted">自动优先使用可用的高质量离线音色。手动选择标有「联网」的音色时，设备可能向语音服务发送朗读文本。</p>
+  <p class="study-muted" id="voiceBoostHelp" hidden>超过 100% 时使用 Windows 本地音色增强，自动限制峰值。</p>
+  <button class="btn primary-study" id="voicePreview">试听</button>
+  <button class="btn" id="voiceMixer" hidden>Windows 音量混合器</button>
 </dialog>
 <div class="toast" id="toast" hidden></div>
 
