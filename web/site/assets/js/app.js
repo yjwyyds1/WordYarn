@@ -354,7 +354,8 @@
               return '<button data-rate="' + p[0] + '"' + (st === p[0] ? ' class="on"' : '') + '>' + p[1] + '</button>';
             }).join('') +
           '</div>' +
-          '<button class="card-speak" data-speak="' + esc(v.w) + '" title="朗读">&#9835;</button>' +
+          '<button class="card-speak" data-speak="' + esc(v.w) + '" aria-label="朗读单词" title="朗读单词">&#9835;</button>' +
+          '<button class="btn vocab-play-all" data-vocab-play-all aria-label="连读单词和句子" title="依次朗读单词、原句和造句">连读单词和句子</button>' +
         '</div>' +
       '</article>';
     }).join('');
@@ -646,7 +647,8 @@
   function speakItems(items, btn) {
     if ((!synth || !window.SpeechSynthesisUtterance) && !window.wordYarnDesktop) { toast('当前设备不支持朗读'); return; }
     var para = btn?.matches('[data-say-para]') ? btn.closest('.para') : null;
-    if (para && speech.btn === btn) {
+    var controls = para || btn?.matches('[data-vocab-play-all]');
+    if (controls && speech.btn === btn) {
       speech.paused = !speech.paused;
       if (speech.audio) {
         if (speech.paused) speech.audio.pause();
@@ -670,12 +672,12 @@
     speech.btn = btn || null;
     speech.progress = para?.querySelector('.para-playback');
     if (btn) btn.classList.add('is-on');
-    if (para) {
+    if (controls) {
       speech.label = btn.textContent;
       btn.textContent = '暂停';
       btn.setAttribute('aria-label', btn.textContent);
       btn.setAttribute('aria-pressed', 'true');
-      speech.progress.hidden = false;
+      if (speech.progress) speech.progress.hidden = false;
     }
     var voice = pickVoice();
     speech.native = Boolean(window.wordYarnDesktop &&
@@ -1014,6 +1016,15 @@
     }
 
     // 朗读
+    var combined = t.closest('[data-vocab-play-all]');
+    if (combined) {
+      var entry = combined.closest('.card');
+      var texts = [$('[data-speak]:not([data-speak-kind])', entry)?.dataset.speak];
+      for (var kind of ['origin', 'example'])
+        $$('.sentence-speak[data-speak-kind="' + kind + '"]', entry).forEach(b => texts.push(b.dataset.speak));
+      speakItems(Array.from(new Set(texts.filter(Boolean)), text => ({text})), combined);
+      return;
+    }
     var sp = t.closest('[data-speak]');
     if (sp) { speak(sp.dataset.speak); return; }
 

@@ -62,8 +62,10 @@
 
 /* ---------- 2. 基础 ---------- */
 *,*::before,*::after{ box-sizing:border-box; }
-html,body{ height:100%; }
+html{ min-height:100%; }
 body{
+  /* Sticky title bars are bounded by the body, so let it grow with the article. */
+  min-height:100vh;
   margin:0; background:var(--paper); color:var(--ink);
   font-family:var(--f-ui); font-size:15px; line-height:1.6;
   -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
@@ -493,7 +495,9 @@ body.nav-closed .main{ margin-left:0; }
 .blk-en{ font-family:var(--f-en); font-size:13.5px; line-height:1.62; color:var(--ink); }
 .blk-cn{ font-family:var(--f-cn); font-size:12.8px; line-height:1.78; color:var(--ink-2); margin-top:3px; }
 .blk-note{ margin-top:6px; font-size:11.5px; color:var(--ink-3); line-height:1.65; }
-.card-foot{ display:flex; align-items:center; gap:8px; margin-top:auto; padding-top:13px; }
+.card-foot{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:auto; padding-top:13px; }
+.vocab-play-all{min-width:9.5em;text-align:center}
+.vocab-play-all.is-on{background:var(--seal-wash);border-color:var(--seal-line);color:var(--seal)}
 .rates{ display:inline-flex; gap:1px; background:var(--paper-lo); border-radius:var(--r); padding:2px; }
 .rates button{ padding:4px 10px; border-radius:2px; font-size:11.5px; color:var(--ink-2); transition:background .14s,color .14s; }
 .rates button:hover{ color:var(--ink); }
