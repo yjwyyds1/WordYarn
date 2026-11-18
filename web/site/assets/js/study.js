@@ -9,7 +9,8 @@
     let queue = [], item = null, searchIndex, searchVersion = 0, exerciseMode, exerciseVersion = 0;
     const $ = ui.$, esc = ui.esc;
     const ratings = { new: '没想起来', fuzzy: '有点模糊', known: '想起来了' };
-    const serverPossible = location.protocol !== 'file:';
+    const android = Boolean(window.wordYarnAndroid);
+    const serverPossible = !android && location.protocol !== 'file:';
     const id = () => crypto.randomUUID?.() || Date.now() + '-' + Math.random().toString(36).slice(2);
     function pending() {
       const stored = [];
@@ -143,12 +144,13 @@
       $('#startDue').disabled = !count;
       $('#reviewSummary').textContent = snapshot
         ? '已答题 ' + snapshot.reviewCount + ' 次 · 到期复习中连续想起至少两次：' + snapshot.remembered + ' 词'
-        : '每次先回忆，再核对原句和词义。';
+        : android ? '已答题 ' + local.reviewCount + ' 次' : '每次先回忆，再核对原句和词义。';
       $('#studyConnection').textContent = connected
         ? (pending().length ? '正在保存学习记录…' : '已保存到 SQLite') :
         window.wordYarnDesktop && tried ? '无法连接本地数据库 · 请保留窗口并重试' :
+        android ? '离线模式 · 学习记录保存在此手机' :
         tried || !serverPossible ? '本地模式 · 学习记录暂存在此浏览器' : '正在连接学习服务…';
-      $('#historyStudy').hidden = !connected;
+      $('#historyStudy').hidden = !connected && !android;
       renderProfile();
     }
     function sync() {
@@ -215,6 +217,7 @@
         const date = day.format(new Date());
         local.activity[date] = (local.activity[date] || 0) + 1;
         local.reviewCount = (local.reviewCount || 0) + 1;
+        if (android) local.history = [{ ...payload }, ...(local.history || [])].slice(0, 100);
       }
       const key = chapter + ':' + lemma;
       local.words[key] = { ...payload, ...estimate(local.words[key], rating, review, now) };
@@ -410,7 +413,7 @@
         if (!target.hidden) { target.hidden = true; return; }
         target.hidden = false; target.textContent = '正在加载…';
         try {
-          const history = await api('history');
+          const history = android ? local.history || [] : await api('history');
           target.innerHTML = history.length ? '<ol>' + history.slice(0, 15).map(h =>
             '<li>' + esc(h.lemma + ' · ' + ratings[h.rating] + ' · ' + new Date(h.reviewedAt * 1000).toLocaleString()) + '</li>').join('') +
             '</ol>' : '还没有答题记录。';

@@ -4,6 +4,8 @@
 /vcpkg_installed/
 /desktop/dist/
 /desktop/build*/
+/android/build/
+/android/dist/
 /web/build*/
 node_modules/
 *.log

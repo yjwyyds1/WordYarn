@@ -217,7 +217,7 @@
 
     var openMap = state.open[ch.id] || {};
     var body = ch.paragraphs.map(function (p, pi) {
-      var isOpen = openMap[p.id] !== undefined ? openMap[p.id] : true;
+      var isOpen = openMap[p.id] !== undefined ? openMap[p.id] : !window.wordYarnAndroid;
       var prose = p.sentences.map(function (s) { return '<span data-gi="' + s._gi + '">' + markText(s.en, s.words) + '</span>'; }).join(' ');
       var rows = p.sentences.map(function (s) {
         return '<div class="srow" data-gi="' + s._gi + '">' +
@@ -534,7 +534,8 @@
 
   /* ---------- 朗读 ---------- */
   var speech = { token: 0 };
-  var synth = window.speechSynthesis;
+  var synth = window.wordYarnAndroid?.synthesis || window.speechSynthesis;
+  var Utterance = window.wordYarnAndroid?.Utterance || window.SpeechSynthesisUtterance;
   var nativeSpeech = action => window.chrome.webview.postMessage('speech:' + action);
   var speechStep = 0, onNativeSpeechDone;
   if (window.wordYarnDesktop) window.wordYarnSpeechResult = function (id, ok, audio) {
@@ -575,7 +576,8 @@
     save();
   });
   $('#voiceMixer').addEventListener('click', () => window.chrome.webview.postMessage('window:mixer'));
-  $('#voicePreview').addEventListener('click', () => speak('The train from the south pulled into Haizhou at ten past seven.'));
+  $('#voicePreview').addEventListener('click', () => speak($('#androidVoiceText')?.value.trim() ||
+    'The train from the south pulled into Haizhou at ten past seven.'));
 
   function speak(text, btn) { speakItems([{text: String(text)}], btn); }
 
@@ -604,6 +606,10 @@
     $$('.karaoke').forEach(k => k.remove());
     $$('.srow.is-speaking').forEach(r => r.classList.remove('is-speaking'));
   }
+
+  if (window.wordYarnAndroid) document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopSpeech();
+  });
 
   /* 在 el 里给 [start, start+len) 这段文字铺一块高亮 */
   function paintWord(host, textEl, start, len) {
@@ -645,7 +651,7 @@
   // Speak individual sentences in sequence: progress advances even on voices
   // that provide no word boundary events.
   function speakItems(items, btn) {
-    if ((!synth || !window.SpeechSynthesisUtterance) && !window.wordYarnDesktop) { toast('当前设备不支持朗读'); return; }
+    if ((!synth || !Utterance) && !window.wordYarnDesktop) { toast('当前设备不支持朗读'); return; }
     var para = btn?.matches('[data-say-para]') ? btn.closest('.para') : null;
     var controls = para || btn?.matches('[data-vocab-play-all]');
     if (controls && speech.btn === btn) {
@@ -723,7 +729,7 @@
         nativeSpeech('play:' + (++speechStep) + ':' + speed + ':' + voiceVolume() + ':' + it.text.slice(0,1800));
         return;
       }
-      var u = new SpeechSynthesisUtterance(it.text);
+      var u = new Utterance(it.text);
       speech.utterance = u;
       u.lang = voice?.lang || 'en-US';
       if (voice) u.voice = voice;
@@ -744,7 +750,8 @@
         if (token !== speech.token) return;
         stopSpeech();
         if (!['canceled','interrupted'].includes(e.error))
-          toast(e.error === 'not-allowed' ? '请点击朗读按钮启用声音' : '无法朗读，请在朗读设置中更换音色');
+          toast(e.error === 'bundled-voice-error' ? '内置音色暂时无法朗读，请重试' :
+            e.error === 'not-allowed' ? '请点击朗读按钮启用声音' : '无法朗读，请在朗读设置中更换音色');
       };
       synth.speak(u);
     }
