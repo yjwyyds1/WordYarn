@@ -5,7 +5,9 @@
   <a href="README.en.md"><img src="https://img.shields.io/badge/language-English-5c6b4a" alt="English"></a>
 </p>
 
-> 把《大学英语四级考试大纲》的 **4,154 个核心词**编进 **30 篇连续故事**，再用一个能逐句对照、能查词、能自测的本地网站把它们读起来。
+> 把《大学英语四级考试大纲》的 **4,154 个核心词**编进 **30 篇连续故事**。用网页版、Windows 桌面版或 Android 离线版精读、查词和复习。
+
+[打开在线网页版](https://yjwyyds1.github.io/WordYarn/) · [Windows 使用与构建](desktop/README.md) · [Android 安装与构建](android/README.md)
 
 ![精读视图](docs/assets/screenshot-read.png)
 
@@ -65,9 +67,11 @@ C++ 学习服务会把阅读位置、复习到期时间和答题历史存进 SQL
 
 ## 三、怎么用
 
-### 安卓手机
+### Android 离线版
 
-WordYarn 安卓版将文章和词表打包到手机，离线也能精读、查词和复习。学习记录保存在本机。安装与构建见 [安卓说明](android/README.md)。
+支持 Android 8.0 及以上。30 篇故事、译文、词表和闪卡随 APK 打包，断网也能使用。阅读位置、词汇掌握度和答题历史保存在当前手机。
+
+内置 **Kokoro 英语音色**，可离线朗读正文、单词、例句，也可在「朗读设置 → 试读英文」中输入新句子。APK 的安装与本地构建步骤见 [安卓版说明](android/README.md)。
 
 ### 方式 A：静态站点（零安装、离线可用）
 
@@ -121,6 +125,7 @@ D:\CET4
 │  ├─ tools/               切句、构建、校验、本地服务器、截图脚本
 │  └─ plan/                词表拆分与逐词校验脚本
 ├─ desktop/                原生 Windows 桌面版和本地打包脚本
+├─ android/                Android 离线版源码、测试和 APK 构建脚本
 ├─ var/                    本机网页版 SQLite 数据（不进入 Git）
 ├─ docs/assets/            README 截图
 └─ .github/workflows/      GitHub Pages 自动部署
@@ -146,22 +151,23 @@ node web/tools/validate_content.mjs chNN   # 译文与原文必须逐句对齐
 node web/tools/build_site_data.mjs         # 重新生成 web/site/data/chNN.js
 ```
 
-改单词例句时，编辑 `web/content/chNN.vocab.json` 里对应词的例句。桌面版通过打包步骤更新其网页资源。
+改单词例句时，编辑 `web/content/chNN.vocab.json` 里对应词的例句。Windows 和 Android 版都在打包时复制 `web/site/` 的资源。
 
 ## 七、路线图
 
 - [x] 30 篇故事 · 4,154 词 · 全量逐句译文
 - [x] 静态站点：精读 / 词表 / 闪卡
 - [x] 本地学习服务：间隔复习与答题历史
-- [ ] 在线版本
+- [x] GitHub Pages 在线静态版
 - [x] Windows 单机桌面版
-- [ ] 移动端应用
+- [x] Android 离线版与内置 Kokoro 朗读
+- [ ] 跨设备学习记录同步
 - [ ] 扩展到六级、考研、雅思等词表
 
 ## 八、已知限制
 
-- 朗读使用浏览器自带的 Web Speech API，离线可用，但系统需要安装英文语音包；逐词高亮在 Chrome / Edge 中效果最好。
-- 静态站点的掌握度与阅读进度存在 `localStorage`，换浏览器或清缓存会丢失；学习模式则存在 SQLite 中。
+- 网页版朗读取决于浏览器和可用的英语音色，Windows 桌面版可使用 Windows 本地朗读。Android 版使用内置的离线 Kokoro 引擎。
+- 静态站点的学习记录保存在浏览器本地存储中，带数据库的学习模式使用 SQLite。Android 版将记录保存在应用内，三端目前没有自动同步。
 - 故事为原创；考纲词表依据常见公开版本整理，不同版本之间可能有个别出入。
 
 ## 九、更多说明

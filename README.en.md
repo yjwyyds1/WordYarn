@@ -9,6 +9,8 @@
 
 WordYarn turns China's CET-4 vocabulary syllabus into **30 connected short stories** about a student named David Lin and his four years at Haizhou University. Every word on the syllabus appears in context, and every occurrence is verified by script — then wrapped in a reader that gives you sentence-level translations, example sentences, pronunciation, and flashcards.
 
+[Open the web reader](https://yjwyyds1.github.io/WordYarn/) · [Windows setup](desktop/README.md) · [Android setup](android/README.md)
+
 ![WordYarn reader — sentence-by-sentence reading view](docs/assets/screenshot-read.png)
 
 <p align="center">
@@ -29,7 +31,7 @@ WordYarn turns China's CET-4 vocabulary syllabus into **30 connected short stori
 | **4,154 syllabus words** | Zero omissions, zero duplicates across the whole series. Every chapter carries 138–139 target words. |
 | **3,032 sentence translations** | Sentence-by-sentence English–Chinese alignment for all 30 chapters. |
 | **5,061 vocabulary examples** | An original example sentence, translation, and usage note for every word sense. |
-| **Two ways to read** | A zero-install static site, plus an optional C++ study server with a database. |
+| **Web, Windows, and Android** | A static web reader, a Windows desktop app, and an offline Android app with bundled Kokoro speech. |
 
 ## Features
 
@@ -62,9 +64,11 @@ A small C++ service (Drogon + SQLite) adds a **Today** page that resumes your la
 
 ## Quick start
 
-### Android
+### Android offline app
 
-The Android app bundles the reader and study materials for offline use. Progress stays on the phone. See the [Android installation and build guide](android/README.md) (Chinese).
+Requires Android 8.0 or later. The APK bundles all 30 stories, translations, vocabulary lists, and flashcards. Reading position, vocabulary mastery, and review history stay on the phone.
+
+The bundled **Kokoro English voice** reads stories, words, examples, and custom English sentences offline. See the [Android installation and build guide](android/README.md) (Chinese).
 
 ### 1. Static reader — no install, no network
 
@@ -118,6 +122,7 @@ The repository includes a GitHub Pages workflow. Push to `main`, then set **Sett
 │  ├─ tools/                   Build, validate, serve, and screenshot scripts
 │  └─ plan/                    Word allocation and coverage-check scripts
 ├─ desktop/                    Native Windows app and packaging
+├─ android/                    Offline Android app, tests, and APK build script
 ├─ var/                        Local web database (ignored by Git)
 ├─ docs/assets/                README screenshots
 └─ .github/workflows/          GitHub Pages deployment
@@ -143,20 +148,23 @@ node web/tools/validate_content.mjs chNN   # translation alignment must pass
 node web/tools/build_site_data.mjs         # regenerate web/site/data/chNN.js
 ```
 
+The Windows and Android builds copy the current assets from `web/site/` when packaged.
+
 ## Roadmap
 
 - [x] 30 chapters · 4,154 words · full sentence translations
 - [x] Static reader with read / vocabulary / flashcards views
 - [x] Local study server with spaced repetition and history
-- [ ] Hosted web version
+- [x] Static web reader hosted on GitHub Pages
 - [x] Windows desktop app
-- [ ] Mobile app
+- [x] Offline Android app with bundled Kokoro speech
+- [ ] Cross-device progress sync
 - [ ] Additional exam word lists (CET-6, postgraduate, IELTS)
 
 ## Notes and limits
 
-- Pronunciation uses the browser's built-in Web Speech API. It works offline once an English voice is installed; word highlighting is best in Chrome/Edge.
-- Mastery and reading state live in `localStorage` in the static reader, and in SQLite in study mode.
+- Web pronunciation depends on browser voices. The Windows app can use local Windows speech, and the Android app uses its bundled offline Kokoro engine.
+- The static reader uses browser storage, the database-backed study mode uses SQLite, and Android keeps progress in the app. Progress does not sync automatically across devices.
 - The stories are original writing; the syllabus list follows a common published version of the CET-4 outline and may differ slightly from other editions.
 
 ## 中文说明
