@@ -62,6 +62,10 @@ A small C++ service (Drogon + SQLite) adds a **Today** page that resumes your la
 
 ## Quick start
 
+### Android
+
+The Android app bundles the reader and study materials for offline use. Progress stays on the phone. See the [Android installation and build guide](android/README.md) (Chinese).
+
 ### 1. Static reader — no install, no network
 
 ```bash
