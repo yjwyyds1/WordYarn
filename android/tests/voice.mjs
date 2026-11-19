@@ -12,16 +12,15 @@ test('built-in voice speaks new text and pauses without restarting', () => {
       method => [method, (...args) => calls.push([method, ...args])]))
   });
   const { synthesis, Utterance } = window.wordYarnAndroid;
-  const voice = synthesis.getVoices()[0];
-  assert.match(voice.name, /Kokoro/);
-  assert.equal(voice.localService, true);
   const utterance = new Utterance('These words were never recorded in advance.');
+  utterance.voice = { voiceURI: 'wordyarn-kitten-7', speaker: 7 };
   utterance.onend = () => events.push('end');
   synthesis.speak(utterance);
   synthesis.pause();
   synthesis.resume();
   assert.deepEqual(calls.map(call => call[0]), ['speak', 'pause', 'resume']);
   assert.equal(calls[0][2], utterance.text);
+  assert.equal(calls[0][5], 7);
   window.wordYarnSpeechEvent(1, 'end', 0, 0);
   assert.deepEqual(events, ['end']);
 });

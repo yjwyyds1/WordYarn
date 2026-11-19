@@ -29,7 +29,7 @@ public final class MainActivity extends Activity {
                 return value;
             });
         }
-        root.setBackgroundColor(0xfff7f0e5);
+        root.setBackgroundColor(0xfff3f6fc);
         page = new WebView(this);
         root.addView(page, new FrameLayout.LayoutParams(-1, -1));
         setContentView(root);
@@ -37,7 +37,7 @@ public final class MainActivity extends Activity {
         page.getSettings().setDomStorageEnabled(true);
         page.getSettings().setAllowFileAccess(false);
         page.getSettings().setAllowContentAccess(false);
-        page.getSettings().setBlockNetworkLoads(true);
+        page.getSettings().setBlockNetworkLoads(false);
         page.addJavascriptInterface(new SpeechBridge(), "AndroidSpeech");
         page.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -46,12 +46,19 @@ public final class MainActivity extends Activity {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 android.net.Uri uri = request.getUrl();
                 String path = uri.getEncodedPath();
+                // Only the configured Azure Speech region may leave the local reader.
+                String authority = uri.getEncodedAuthority();
+                String method = request.getMethod();
+                if ("https".equals(uri.getScheme()) && authority != null
+                    && authority.matches("[a-z][a-z0-9]{0,31}\\.tts\\.speech\\.microsoft\\.com")
+                    && "/cognitiveservices/v1".equals(path) && uri.getEncodedQuery() == null
+                    && ("POST".equals(method) || "OPTIONS".equals(method))) return null;
                 if ("https".equals(uri.getScheme()) && HOST.equals(uri.getEncodedAuthority())
                     && "GET".equals(request.getMethod()) && path != null
-                    && path.matches("/(index\\.html|data/[a-z0-9]+\\.js|assets/[a-z0-9/_.-]+)")
+                    && path.matches("/(index\\.html|favicon\\.ico|data/[a-z0-9]+\\.js|assets/[a-z0-9/_.-]+)")
                     && !path.contains("..")) {
                     String mime = path.endsWith(".js") ? "application/javascript" : path.endsWith(".css") ? "text/css"
-                        : path.endsWith(".svg") ? "image/svg+xml" : "text/html";
+                        : path.endsWith(".svg") ? "image/svg+xml" : path.endsWith(".ico") ? "image/x-icon" : "text/html";
                     try { return new WebResourceResponse(mime, "UTF-8", getAssets().open("reader" + path)); }
                     catch (IOException ignored) {}
                 }
@@ -68,11 +75,11 @@ public final class MainActivity extends Activity {
     }
 
     private final class SpeechBridge {
-        @JavascriptInterface public void speak(String id, String text, float rate, float volume) {
+        @JavascriptInterface public void speak(String id, String text, float rate, float volume, int speaker) {
             if (id == null || !id.matches("[0-9]{1,12}") || text == null || text.length() > 1800
-                || !Float.isFinite(rate) || !Float.isFinite(volume)) return;
+                || !Float.isFinite(rate) || !Float.isFinite(volume) || speaker < 0 || speaker >= 8) return;
             runOnUiThread(() -> { if (voice != null) voice.speak(id, text, Math.max(.5f, Math.min(2f, rate)),
-                Math.max(0f, Math.min(1f, volume))); });
+                Math.max(0f, Math.min(1f, volume)), speaker); });
         }
         @JavascriptInterface public void stop() {
             runOnUiThread(() -> { if (voice != null) voice.stop(); });

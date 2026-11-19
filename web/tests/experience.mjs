@@ -86,6 +86,9 @@ test('reader, word list, flashcards, dictation and activity dashboard', async ()
     assert.notEqual(await page.locator('.fc-word').textContent(), first);
     await page.locator('[data-restart]').click();
     assert.match(await page.locator('.fc-idx').first().textContent(), /待练 139/);
+    // The shuffled flashcards can include boundary. Make it due explicitly.
+    await page.getByRole('tab',{name:'词表'}).click();
+    await page.locator('.card[data-w=boundary] [data-rate=new]').click();
     await page.getByRole('tab',{name:'今日'}).click();
     await page.locator('#startDue').click();
     await page.getByRole('heading',{name:'今日听写'}).waitFor();
@@ -113,10 +116,35 @@ test('reader, word list, flashcards, dictation and activity dashboard', async ()
     await mobile.close();
     // Exercise both title rows in the layout used by the Windows host.
     const desktop = await browser.newPage({viewport:{width:1280,height:780},reducedMotion:'reduce'});
-    await desktop.addInitScript(() => { window.wordYarnDesktop = {}; });
+    await desktop.addInitScript(() => {
+      window.wordYarnDesktop = {};
+      window.nativeRequests = [];
+      window.chrome.webview = { postMessage: message => nativeRequests.push(message) };
+      const voice = { name:'Test English Natural', voiceURI:'test-natural', lang:'en-US', localService:true };
+      window.availableTestVoices = [voice];
+      window.browserUtterances = [];
+      window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
+      Object.defineProperty(window, 'speechSynthesis', {value:{
+        getVoices: () => availableTestVoices,
+        addEventListener(){}, cancel(){},
+        speak(utterance) { browserUtterances.push(utterance); utterance.onend?.(); }
+      }});
+      localStorage.setItem('cet4.reader.v2', JSON.stringify({ voice:'test-natural', voiceVolume:125 }));
+    });
     await desktop.route('**/api/**',route=>route.fulfill({status:404}));
     await desktop.goto(base+'#ch01/read');
     await desktop.locator('.srow').first().waitFor();
+    await desktop.locator('#voiceSettings').click();
+    await desktop.locator('#voicePreview').click();
+    assert.match(await desktop.locator('#voiceChoice option').first().textContent(), /Kitten.*0/);
+    assert.deepEqual(await desktop.evaluate(() => ({
+      browser: browserUtterances.length,
+      request: nativeRequests.find(message => message.startsWith('speech:play:'))
+    })), {browser:0, request:'speech:play:1:0.94:125:0:The train from the south pulled into Haizhou at ten past seven.'});
+    await desktop.locator('#voiceChoice').selectOption('wordyarn-kitten-7');
+    await desktop.locator('#voicePreview').click();
+    assert.ok(await desktop.evaluate(() => nativeRequests.some(message => message.startsWith('speech:play:2:0.94:125:7:'))));
+    await desktop.locator('#voiceDialog').getByRole('button',{name:'关闭'}).click();
     for (const resize of [{width:1280,height:780},{width:760,height:700}]) {
       await desktop.setViewportSize(resize);
       await desktop.evaluate(() => {

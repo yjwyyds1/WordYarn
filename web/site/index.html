@@ -106,6 +106,13 @@
 <dialog class="study-dialog" id="voiceDialog" aria-labelledby="voiceTitle">
   <form method="dialog" class="study-dialog-head"><h2 id="voiceTitle">朗读设置</h2><button class="btn">关闭</button></form>
   <label class="voice-field">英语音色 <select id="voiceChoice"></select></label>
+  <section id="natashaSettings" hidden>
+    <p class="study-muted">Natasha 需要联网。朗读的英文文本将发送到 Microsoft Azure，使用你自己的 Speech 资源和额度。</p>
+    <div class="natasha-credentials">
+      <label class="voice-field">Azure 区域 <input id="natashaRegion" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="例如 australiaeast" maxlength="32"></label>
+      <label class="voice-field">Speech 密钥 <input id="natashaKey" type="password" autocomplete="off" placeholder="仅用于本次打开应用" maxlength="128"></label>
+    </div>
+  </section>
   <label class="voice-field">语速 <select id="voiceRate">
     <option value="0.8">慢速</option><option value="0.94">清晰</option><option value="1">自然</option><option value="1.12">快速</option>
   </select></label>
@@ -113,14 +120,15 @@
     <input id="voiceVolume" type="range" min="0" max="100" step="1" value="100">
   </label>
   <p class="study-muted">自动优先使用可用的高质量离线音色。手动选择标有「联网」的音色时，设备可能向语音服务发送朗读文本。</p>
-  <p class="study-muted" id="voiceBoostHelp" hidden>超过 100% 时使用 Windows 本地音色增强，自动限制峰值。</p>
+  <p class="study-muted" id="voiceBoostHelp" hidden>超过 100% 时会自动限制峰值，避免声音失真。</p>
   <button class="btn primary-study" id="voicePreview">试听</button>
   <button class="btn" id="voiceMixer" hidden>Windows 音量混合器</button>
+  <p class="study-muted" id="voiceStatus" role="status" hidden></p>
 </dialog>
 <div class="toast" id="toast" hidden></div>
 
 <script src="data/chapters.js"></script>
 <script src="assets/js/study.js"></script>
-<script src="assets/js/app.js"></script>
+<script src="assets/js/app.js?v=voice-dialog"></script>
 </body>
 </html>

@@ -536,18 +536,69 @@
   var speech = { token: 0 };
   var synth = window.wordYarnAndroid?.synthesis || window.speechSynthesis;
   var Utterance = window.wordYarnAndroid?.Utterance || window.SpeechSynthesisUtterance;
+  var natashaId = 'wordyarn-natasha-online';
+  var canUseNatasha = Boolean(window.wordYarnDesktop || window.wordYarnAndroid);
+  var wantsNatasha = () => canUseNatasha && state.voice === natashaId;
+  // Match the speaker IDs in sherpa-onnx's kitten-micro-en-v0_8 model.
+  var kittenVoices = Array.from({length: 8}, (_, speaker) => ({
+    name: 'Kitten · ' + speaker + ' 号' + (speaker % 2 ? '女声' : '男声'),
+    lang: 'en-US',
+    voiceURI: 'wordyarn-kitten-' + speaker,
+    localService: true,
+    speaker
+  }));
   var nativeSpeech = action => window.chrome.webview.postMessage('speech:' + action);
   var speechStep = 0, onNativeSpeechDone;
   if (window.wordYarnDesktop) window.wordYarnSpeechResult = function (id, ok, audio) {
     if (id === speechStep && onNativeSpeechDone) onNativeSpeechDone(ok, audio);
   };
-  var speechVoices = function () { return (synth?.getVoices() || []).filter(v => /^en/i.test(v.lang)); };
-  var voiceVolume = () => state.voiceVolume ?? (window.wordYarnDesktop && !state.voice ? 125 : 100);
+  var speechVoices = function () {
+    return canUseNatasha ? kittenVoices : (synth?.getVoices() || []).filter(v => /^en/i.test(v.lang));
+  };
+  function voiceVolume(native) {
+    return Math.min(native ? 150 : 100, state.voiceVolume ?? 100);
+  }
+
+  function voiceNotice(message) {
+    if ($('#voiceDialog').open) {
+      var status = $('#voiceStatus');
+      status.textContent = message;
+      status.hidden = !message;
+    } else if (message) toast(message);
+  }
+
+  function voiceLabel(voice) {
+    var name = voice.name.replace(/^Microsoft\s+/i, '')
+      .replace(/\s+Online\b.*$/i, '').replace(/\s+-\s+English\b.*$/i, '')
+      .replace(/Multilingual/i, ' 多语');
+    if (name.length > 27) name = name.slice(0, 26) + '…';
+    return name + ' · ' + voice.lang + (voice.localService === false ? '（联网）' : '');
+  }
+
+  async function fetchNatasha(text, settings, rate, signal) {
+    var ratePercent = Math.round((rate - 1) * 100);
+    var speed = (ratePercent >= 0 ? '+' : '') + ratePercent + '%';
+    var response = await fetch('https://' + settings.region + '.tts.speech.microsoft.com/cognitiveservices/v1', {
+      method: 'POST', signal, redirect: 'error', credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer',
+      headers: {
+        'Ocp-Apim-Subscription-Key': settings.key,
+        'Content-Type': 'application/ssml+xml',
+        'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3'
+      },
+      body: '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-AU">' +
+        '<voice name="en-AU-NatashaNeural"><prosody rate="' + speed + '">' + esc(text) + '</prosody></voice></speak>'
+    });
+    if (response.status === 401 || response.status === 403) throw Error('credentials');
+    if (response.status === 429) throw Error('quota');
+    if (!response.ok) throw Error('service');
+    return response.blob();
+  }
 
   function pickVoice() {
     var voices = speechVoices();
     var preferred = voices.find(v => v.voiceURI === state.voice);
     if (preferred) return preferred;
+    if (canUseNatasha) return voices[0];
     var offline = voices.filter(v => v.localService !== false);
     return offline.find(v => /natural|neural|enhanced|premium/i.test(v.name)) ||
       offline.find(v => /^en-US/i.test(v.lang) && /google|aria|jenny|guy/i.test(v.name)) ||
@@ -556,19 +607,29 @@
 
   function renderVoiceChoices() {
     var sel = $('#voiceChoice'), voices = speechVoices();
-    sel.replaceChildren(new Option(voices.length ? '自动选择 · 优先离线' : window.wordYarnDesktop ? 'Windows 本地音色' : '自动选择 · 设备默认', ''));
-    for (var voice of voices) sel.append(new Option(voice.name + ' · ' + voice.lang + (voice.localService === false ? '（联网）' : ''), voice.voiceURI));
-    sel.value = voices.some(v => v.voiceURI === state.voice) ? state.voice : '';
+    var native = !wantsNatasha() && window.wordYarnDesktop;
+    sel.replaceChildren(new Option(canUseNatasha ? '默认 · Kitten 0 号男声（离线）' :
+      voices.length ? '自动选择 · 优先离线' : '自动选择 · 设备默认', ''));
+    if (canUseNatasha) sel.append(new Option('Natasha · en-AU（Azure 联网）', natashaId));
+    for (var voice of voices) sel.append(new Option(voiceLabel(voice), voice.voiceURI));
+    sel.value = wantsNatasha() || voices.some(v => v.voiceURI === state.voice) ? state.voice : '';
+    sel.title = voices.find(v => v.voiceURI === sel.value)?.name || '';
+    $('#natashaSettings').hidden = !wantsNatasha();
     $('#voiceRate').value = state.voiceRate || '0.94';
-    $('#voiceVolume').max = window.wordYarnDesktop && !sel.value ? 150 : 100;
-    $('#voiceBoostHelp').hidden = !window.wordYarnDesktop || Boolean(sel.value);
-    $('#voiceVolume').value = voiceVolume();
+    $('#voiceVolume').max = native ? 150 : 100;
+    $('#voiceBoostHelp').hidden = !native;
+    $('#voiceVolume').value = voiceVolume(native);
     $('#voiceVolumeValue').textContent = $('#voiceVolume').value + '%';
     $('#voiceMixer').hidden = !window.wordYarnDesktop;
   }
-  synth?.addEventListener('voiceschanged', renderVoiceChoices);
-  $('#voiceSettings').addEventListener('click', () => { renderVoiceChoices(); $('#voiceDialog').showModal(); });
-  $('#voiceChoice').addEventListener('change', e => { state.voice = e.target.value; save(); });
+  synth?.addEventListener?.('voiceschanged', renderVoiceChoices);
+  $('#voiceSettings').addEventListener('click', () => { renderVoiceChoices(); $('#voiceDialog').showModal(); voiceNotice(''); });
+  $('#voiceChoice').addEventListener('change', e => { state.voice = e.target.value; renderVoiceChoices(); voiceNotice(''); save(); });
+  $('#natashaRegion').value = state.natashaRegion || '';
+  $('#natashaRegion').addEventListener('change', e => {
+    state.natashaRegion = e.target.value.trim().toLowerCase();
+    save();
+  });
   $('#voiceRate').addEventListener('change', e => { state.voiceRate = e.target.value; save(); });
   $('#voiceVolume').addEventListener('input', e => {
     state.voiceVolume = Number(e.target.value);
@@ -595,9 +656,12 @@
     speech.btn = speech.label = speech.progress = speech.utterance = null;
     speech.paused = false;
     speech.resumeNext = null;
+    if (speech.pending) { speech.pending.abort(); speech.pending = null; }
     if (speech.audio) { speech.audio.pause(); speech.audio.removeAttribute('src'); speech.audio = null; }
+    if (speech.releaseAudio) { speech.releaseAudio(); speech.releaseAudio = null; }
     if (onNativeSpeechDone) { onNativeSpeechDone = null; nativeSpeech('stop'); }
     speech.native = false;
+    speech.cloud = false;
     if (synth) { synth.cancel(); if (synth.paused) synth.resume(); }
     clearKaraoke();
   }
@@ -651,16 +715,16 @@
   // Speak individual sentences in sequence: progress advances even on voices
   // that provide no word boundary events.
   function speakItems(items, btn) {
-    if ((!synth || !Utterance) && !window.wordYarnDesktop) { toast('当前设备不支持朗读'); return; }
+    var useNatasha = wantsNatasha();
+    if (!useNatasha && (!synth || !Utterance) && !window.wordYarnDesktop) { toast('当前设备不支持朗读'); return; }
     var para = btn?.matches('[data-say-para]') ? btn.closest('.para') : null;
     var controls = para || btn?.matches('[data-vocab-play-all]');
     if (controls && speech.btn === btn) {
       speech.paused = !speech.paused;
       if (speech.audio) {
         if (speech.paused) speech.audio.pause();
-        else speech.audio.play().catch(() => { stopSpeech(); toast('无法播放增强语音'); });
-      } else if (speech.native) nativeSpeech(speech.paused ? 'pause' : 'resume');
-      else if (speech.paused) synth.pause(); else synth.resume();
+        else speech.audio.play().catch(() => { stopSpeech(); toast('无法播放语音'); });
+      } else if (!speech.native && !speech.cloud) { if (speech.paused) synth.pause(); else synth.resume(); }
       btn.textContent = speech.paused ? '继续播放' : '暂停';
       btn.setAttribute('aria-label', btn.textContent);
       btn.setAttribute('aria-pressed', String(!speech.paused));
@@ -674,6 +738,16 @@
     stopSpeech();
     items = items.filter(it => it.text);
     if (!items.length) return;
+    var azure;
+    if (useNatasha) {
+      azure = { region: $('#natashaRegion').value.trim().toLowerCase(), key: $('#natashaKey').value.trim() };
+      if (!/^[a-z][a-z0-9]{0,31}$/.test(azure.region) || !/^[A-Za-z0-9._-]{16,128}$/.test(azure.key)) {
+        renderVoiceChoices();
+        if (!$('#voiceDialog').open) $('#voiceDialog').showModal();
+        voiceNotice('请填写 Azure 区域和 Speech 密钥');
+        return;
+      }
+    }
     var token = speech.token;
     speech.btn = btn || null;
     speech.progress = para?.querySelector('.para-playback');
@@ -686,8 +760,10 @@
       if (speech.progress) speech.progress.hidden = false;
     }
     var voice = pickVoice();
-    speech.native = Boolean(window.wordYarnDesktop &&
-      (!voice || !window.SpeechSynthesisUtterance || (!state.voice && voiceVolume() > 100)));
+    speech.cloud = useNatasha;
+    speech.native = !useNatasha && Boolean(window.wordYarnDesktop);
+    var volume = voiceVolume(speech.native);
+    var rate = Number(state.voiceRate || 0.94) || 0.94;
     function next(i) {
       if (token !== speech.token) return;
       if (speech.paused) { speech.resumeNext = () => next(i); return; }
@@ -711,30 +787,59 @@
         speech.progress.querySelector('span').textContent = (i + 1) + ' / ' + items.length + ' 句';
       }
       progress(0);
+      function playClip(src, failure, dispose) {
+        var clip = new Audio(src);
+        clip.volume = speech.cloud ? volume / 100 : 1;
+        speech.audio = clip;
+        speech.releaseAudio = dispose || null;
+        clip.onplaying = () => { if (token === speech.token) it.host?.closest('.srow')?.classList.add('is-speaking'); };
+        clip.onended = () => {
+          if (token !== speech.token) return;
+          if (speech.releaseAudio) { speech.releaseAudio(); speech.releaseAudio = null; }
+          speech.audio = null;
+          next(i + 1);
+        };
+        var fail = () => { if (token === speech.token) { stopSpeech(); voiceNotice(failure); } };
+        clip.onerror = fail;
+        clip.ontimeupdate = () => { if (token === speech.token && clip.duration) progress(Math.min(.99, clip.currentTime / clip.duration)); };
+        if (!speech.paused) clip.play().catch(() => { if (!speech.paused) fail(); });
+      }
+      if (useNatasha) {
+        if ($('#voiceDialog').open) voiceNotice('正在合成 Natasha 语音…');
+        var controller = new AbortController();
+        speech.pending = controller;
+        var timeout = setTimeout(() => controller.abort(), 20000);
+        fetchNatasha(it.text, azure, Math.min(1.5, Math.max(.5, rate)), controller.signal).then(blob => {
+          if (token !== speech.token) return;
+          speech.pending = null;
+          voiceNotice('');
+          var src = URL.createObjectURL(blob);
+          playClip(src, 'Natasha 音频播放失败', () => URL.revokeObjectURL(src));
+        }).catch(error => {
+          if (token !== speech.token) return;
+          stopSpeech();
+          voiceNotice(error.message === 'credentials' ? 'Natasha 的 Azure 密钥或区域不匹配' :
+            error.message === 'quota' ? 'Natasha 请求过多，请检查 Azure 额度' : 'Natasha 联网朗读失败，请检查网络和 Azure 区域');
+        }).finally(() => clearTimeout(timeout));
+        return;
+      }
       if (speech.native) {
         it.host?.closest('.srow')?.classList.add('is-speaking');
         onNativeSpeechDone = function (ok, audio) {
           if (token !== speech.token) return;
-          if (ok && audio) {
-            var clip = new Audio('data:audio/wav;base64,' + audio);
-            speech.audio = clip;
-            clip.onended = () => { if (token === speech.token) { speech.audio = null; next(i+1); } };
-            clip.onerror = () => { if (token === speech.token) { stopSpeech(); toast('无法播放增强语音'); } };
-            clip.ontimeupdate = () => { if (token === speech.token && clip.duration) progress(Math.min(.99, clip.currentTime / clip.duration)); };
-            if (!speech.paused) clip.play().catch(() => { if (token === speech.token && !speech.paused) { stopSpeech(); toast('无法播放增强语音'); } });
-          } else if (ok) next(i + 1);
-          else { stopSpeech(); toast('找不到可用的英语语音，请检查 Windows 语音设置'); }
+          onNativeSpeechDone = null;
+          if (ok && audio) playClip('data:audio/wav;base64,' + audio, 'Kitten 音频播放失败');
+          else { stopSpeech(); voiceNotice('Kitten 朗读失败，请检查软件目录中的语音包'); }
         };
-        var speed = Math.round((Number(state.voiceRate || 0.94) - 1) * 10);
-        nativeSpeech('play:' + (++speechStep) + ':' + speed + ':' + voiceVolume() + ':' + it.text.slice(0,1800));
+        nativeSpeech('play:' + (++speechStep) + ':' + rate + ':' + volume + ':' + voice.speaker + ':' + it.text.slice(0,1800));
         return;
       }
       var u = new Utterance(it.text);
       speech.utterance = u;
       u.lang = voice?.lang || 'en-US';
       if (voice) u.voice = voice;
-      u.rate = Number(state.voiceRate || 0.94);
-      u.volume = Math.min(100, voiceVolume()) / 100;
+      u.rate = rate;
+      u.volume = volume / 100;
       u.pitch = 1;
       u.onstart = function () {
         if (token === speech.token) it.host?.closest('.srow')?.classList.add('is-speaking');

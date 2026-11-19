@@ -22,13 +22,14 @@ $assets = Join-Path $build 'assets/reader'
 $classes = Join-Path $build 'classes'
 $site = Join-Path $repo 'web/site'
 $voice = (Get-Item -LiteralPath $VoicePack).FullName
-$voiceFiles = @('model.int8.onnx','voices.bin','tokens.txt','espeak-ng-data')
+$voiceFiles = @('model.onnx','voices.bin','tokens.txt','espeak-ng-data')
 foreach ($name in $voiceFiles) {
     if (!(Test-Path -LiteralPath "$voice/$name")) { throw "Incomplete voice pack: $name" }
 }
 New-Item -ItemType Directory -Force $assets, "$assets/assets", "$assets/data", $classes, $dist | Out-Null
 Copy-Item "$site/assets/css", "$site/assets/js" "$assets/assets" -Recurse -Force
 Copy-Item "$site/assets/wordyarn.svg" "$assets/assets/" -Force
+Copy-Item "$site/favicon.ico" "$assets/" -Force
 Copy-Item "$site/data/chapters.js" "$assets/data/" -Force
 foreach ($chapter in 1..30) {
     Copy-Item ("$site/data/ch{0:00}.js" -f $chapter) "$assets/data/" -Force

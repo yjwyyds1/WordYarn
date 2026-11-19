@@ -7,7 +7,7 @@ import android.util.Log;
 import com.k2fsa.sherpa.onnx.GeneratedAudio;
 import com.k2fsa.sherpa.onnx.OfflineTts;
 import com.k2fsa.sherpa.onnx.OfflineTtsConfig;
-import com.k2fsa.sherpa.onnx.OfflineTtsKokoroModelConfig;
+import com.k2fsa.sherpa.onnx.OfflineTtsKittenModelConfig;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +26,7 @@ final class OfflineVoice {
     private MediaPlayer player; // main thread only
     private File clip;
     private boolean ready, paused, started, closed;
-    private static final String PACK = "kokoro-en-v019";
+    private static final String PACK = "kitten-micro-en-v08";
 
     OfflineVoice(Activity host, Events events) {
         this.host = host;
@@ -52,17 +52,17 @@ final class OfflineVoice {
             if (!marker.createNewFile()) throw new IOException("Cannot mark voice pack ready");
         }
         OfflineTtsConfig config = new OfflineTtsConfig();
-        OfflineTtsKokoroModelConfig kokoro = config.getModel().getKokoro();
-        kokoro.setModel(new File(folder, "model.int8.onnx").getPath());
-        kokoro.setVoices(new File(folder, "voices.bin").getPath());
-        kokoro.setTokens(new File(folder, "tokens.txt").getPath());
-        kokoro.setDataDir(new File(folder, "espeak-ng-data").getPath());
+        OfflineTtsKittenModelConfig kitten = config.getModel().getKitten();
+        kitten.setModel(new File(folder, "model.onnx").getPath());
+        kitten.setVoices(new File(folder, "voices.bin").getPath());
+        kitten.setTokens(new File(folder, "tokens.txt").getPath());
+        kitten.setDataDir(new File(folder, "espeak-ng-data").getPath());
         config.getModel().setNumThreads(2);
         engine = new OfflineTts(null, config);
         return engine;
     }
 
-    void speak(String id, String text, float speed, float volume) {
+    void speak(String id, String text, float speed, float volume, int speaker) {
         if (closed) return;
         stop();
         final long request = revision;
@@ -72,7 +72,7 @@ final class OfflineVoice {
                 if (request != revision) return;
                 OfflineTts model = engine();
                 if (request != revision) return;
-                GeneratedAudio audio = model.generate(text, 0, speed);
+                GeneratedAudio audio = model.generate(text, speaker, speed);
                 if (request != revision) return;
                 wave = File.createTempFile("wordyarn-", ".wav", host.getCacheDir());
                 if (audio.getSamples().length == 0 || !audio.save(wave.getPath())) throw new IOException("Empty audio");

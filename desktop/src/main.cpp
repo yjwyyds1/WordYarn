@@ -9,16 +9,20 @@
 #include <bcrypt.h>
 #include <wincrypt.h>
 #include <dwmapi.h>
-#include <sapi.h>
 #include <wrl.h>
 #include <WebView2.h>
+#include <sherpa-onnx/c-api/c-api.h>
 #include <array>
 #include <algorithm>
-#include <cstdint>
-#include <cstring>
+#include <chrono>
+#include <cmath>
 #include <filesystem>
+#include <future>
+#include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
+#include <vector>
 #include "migration.h"
 
 using Microsoft::WRL::Callback;
@@ -48,17 +52,27 @@ struct Http {
     ~Http() { if (value) WinHttpCloseHandle(value); }
     explicit operator bool() const { return value != nullptr; }
 };
+struct SpeechRequest {
+    unsigned id;
+    float rate;
+    int volume, speaker;
+    std::string text;
+};
+struct SpeechResult {
+    unsigned id;
+    std::wstring audio;
+};
 struct App {
     Handle child, job;
     HWND window = nullptr;
     ComPtr<ICoreWebView2Controller> controller;
     ComPtr<ICoreWebView2> view;
-    ComPtr<ISpVoice> nativeVoice;
-    ComPtr<IStream> speechBuffer;
-    ComPtr<ISpStream> speechStream;
-    int speechGain = 100;
+    fs::path voicePack;
+    std::unique_ptr<const SherpaOnnxOfflineTts, decltype(&SherpaOnnxDestroyOfflineTts)>
+        voice{nullptr, SherpaOnnxDestroyOfflineTts};
+    std::optional<SpeechRequest> nextSpeech;
+    std::future<SpeechResult> speechJob;
     unsigned speechId = 0;
-    bool nativePaused = false;
     HBRUSH frameBrush = nullptr;
     std::wstring token, origin;
     fs::path profile;
@@ -93,129 +107,110 @@ struct App {
 
     void stopNativeSpeech() {
         KillTimer(window, speechTimer);
-        if (!nativeVoice) return;
-        if (nativePaused) nativeVoice->Resume();
-        nativePaused = false;
-        nativeVoice->Speak(nullptr, SPF_PURGEBEFORESPEAK, nullptr);
-        if (speechStream) {
-            nativeVoice->SetOutput(nullptr, TRUE);
-            speechStream.Reset();
-            speechBuffer.Reset();
-        }
+        nextSpeech.reset();
+        speechId = 0;
     }
 
-    void speechReply(bool ok) {
-        KillTimer(window, speechTimer);
-        if (!view) return;
-        std::wstring audio;
-        if (ok && speechBuffer) {
-            try { audio = boostedAudio(); } catch (const std::exception&) {}
-            ok = !audio.empty();
-            stopNativeSpeech();
-        }
-        const auto script = L"window.wordYarnSpeechResult?.(" + std::to_wstring(speechId) +
-            (ok && !audio.empty() ? L",true,'" + audio + L"')" : ok ? L",true)" : L",false)");
+    void speechReply(const SpeechResult& result) {
+        if (!view || result.id != speechId) return;
+        const auto script = L"window.wordYarnSpeechResult?.(" + std::to_wstring(result.id) +
+            (result.audio.empty() ? L",false)" : L",true,'" + result.audio + L"')");
         view->ExecuteScript(script.c_str(), nullptr);
     }
 
-    bool bufferSpeech() {
-        WAVEFORMATEX format{WAVE_FORMAT_PCM, 1, 22050, 44100, 2, 16, 0};
-        return SUCCEEDED(CreateStreamOnHGlobal(nullptr, TRUE, &speechBuffer)) &&
-            SUCCEEDED(CoCreateInstance(CLSID_SpStream, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&speechStream))) &&
-            SUCCEEDED(speechStream->SetBaseStream(speechBuffer.Get(), SPDFID_WaveFormatEx, &format)) &&
-            SUCCEEDED(nativeVoice->SetOutput(speechStream.Get(), FALSE));
-    }
-
-    std::wstring boostedAudio() {
-        STATSTG info{};
-        LARGE_INTEGER start{};
-        if (FAILED(speechBuffer->Stat(&info, STATFLAG_NONAME)) || info.cbSize.QuadPart < 2 ||
-            info.cbSize.QuadPart > 8 * 1024 * 1024 ||
-            FAILED(speechBuffer->Seek(start, STREAM_SEEK_SET, nullptr))) return {};
-        const auto pcmBytes = static_cast<uint32_t>(info.cbSize.QuadPart) & ~1u;
-        const auto waveBytes = 44 + pcmBytes;
-        std::string wave(waveBytes, '\0');
-        ULONG read = 0;
-        if (FAILED(speechBuffer->Read(wave.data() + 44, pcmBytes, &read)) || read != pcmBytes) return {};
-        const auto put = [&](size_t offset, uint32_t number) { std::memcpy(wave.data() + offset, &number, 4); };
-        std::memcpy(wave.data(), "RIFF", 4); put(4, waveBytes - 8);
-        std::memcpy(wave.data() + 8, "WAVEfmt ", 8);
-        put(16, 16); put(20, 0x10001); put(24, 22050); put(28, 44100); put(32, 0x100002);
-        std::memcpy(wave.data() + 36, "data", 4); put(40, pcmBytes);
-        // Cap the requested gain against the waveform's peak to avoid clipping.
-        double gain = speechGain / 100.0;
-        int peak = 0;
-        for (unsigned i = 44; i < waveBytes; i += 2) {
-            int16_t sample; std::memcpy(&sample, wave.data() + i, 2);
-            peak = std::max(peak, sample < 0 ? -static_cast<int>(sample) : static_cast<int>(sample));
+    // Only the synthesis worker initializes and uses the model.
+    std::wstring synthesize(const SpeechRequest& request) {
+        if (!voice) {
+            const auto model = voicePack / "model.onnx";
+            const auto voices = voicePack / "voices.bin";
+            const auto tokens = voicePack / "tokens.txt";
+            const auto data = voicePack / "espeak-ng-data";
+            if (!fs::is_regular_file(model) || !fs::is_regular_file(voices) ||
+                !fs::is_regular_file(tokens) || !fs::is_regular_file(data / "phontab")) return {};
+            const auto modelPath = model.u8string(), voicesPath = voices.u8string();
+            const auto tokensPath = tokens.u8string(), dataPath = data.u8string();
+            SherpaOnnxOfflineTtsConfig config{};
+            config.model.kitten.model = modelPath.c_str();
+            config.model.kitten.voices = voicesPath.c_str();
+            config.model.kitten.tokens = tokensPath.c_str();
+            config.model.kitten.data_dir = dataPath.c_str();
+            config.model.num_threads = 2;
+            voice.reset(SherpaOnnxCreateOfflineTts(&config));
         }
-        if (peak) gain = std::min(gain, 32767.0 / peak);
-        for (unsigned i = 44; i < waveBytes; i += 2) {
-            int16_t sample; std::memcpy(&sample, wave.data() + i, 2);
-            sample = static_cast<int16_t>(sample * gain);
-            std::memcpy(wave.data() + i, &sample, 2);
-        }
+        if (!voice) return {};
+        SherpaOnnxGenerationConfig options{};
+        options.silence_scale = 0.2f;
+        options.speed = request.rate;
+        options.sid = request.speaker;
+        const std::unique_ptr<const SherpaOnnxGeneratedAudio, decltype(&SherpaOnnxDestroyOfflineTtsGeneratedAudio)>
+            clip(SherpaOnnxOfflineTtsGenerateWithConfig(voice.get(), request.text.c_str(), &options, nullptr, nullptr),
+                SherpaOnnxDestroyOfflineTtsGeneratedAudio);
+        if (!clip || !clip->samples || clip->n <= 0) return {};
+        const auto waveBytes = SherpaOnnxWaveFileSize(clip->n);
+        if (waveBytes <= 0 || waveBytes > 8 * 1024 * 1024) return {};
+        std::vector<float> samples(clip->samples, clip->samples + clip->n);
+        float gain = request.volume / 100.0f, peak = 0;
+        for (const auto sample : samples) peak = std::max(peak, std::abs(sample));
+        if (peak > 0) gain = std::min(gain, 1.0f / peak);
+        for (auto& sample : samples) sample *= gain;
+        std::string wave(static_cast<size_t>(waveBytes), '\0');
+        SherpaOnnxWriteWaveToBuffer(samples.data(), clip->n, clip->sample_rate, wave.data());
         DWORD length = 0;
         constexpr auto flags = CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF;
         const auto* bytes = reinterpret_cast<const BYTE*>(wave.data());
-        if (!CryptBinaryToStringW(bytes, waveBytes, flags, nullptr, &length)) return {};
+        const auto size = static_cast<DWORD>(wave.size());
+        if (!CryptBinaryToStringW(bytes, size, flags, nullptr, &length)) return {};
         std::wstring encoded(length, L'\0');
-        if (!CryptBinaryToStringW(bytes, waveBytes, flags, encoded.data(), &length)) return {};
+        if (!CryptBinaryToStringW(bytes, size, flags, encoded.data(), &length)) return {};
         encoded.resize(length);
         return encoded;
     }
 
-    bool startEnglishVoice() {
-        if (nativeVoice) return true;
-        ComPtr<ISpVoice> voice;
-        if (FAILED(CoCreateInstance(CLSID_SpVoice, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&voice)))) return false;
-        ComPtr<ISpObjectTokenCategory> category;
-        if (FAILED(CoCreateInstance(CLSID_SpObjectTokenCategory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&category))) ||
-            FAILED(category->SetId(SPCAT_VOICES, FALSE))) return false;
-        for (const auto language : {L"Language=409", L"Language=809", L"Language=1009", L"Language=c09"}) {
-            ComPtr<IEnumSpObjectTokens> choices;
-            ComPtr<ISpObjectToken> token;
-            if (SUCCEEDED(category->EnumTokens(language, nullptr, &choices)) &&
-                choices && choices->Next(1, &token, nullptr) == S_OK && SUCCEEDED(voice->SetVoice(token.Get()))) {
-                nativeVoice = voice;
-                return true;
-            }
+    void pollSpeech() {
+        if (speechJob.valid()) {
+            if (speechJob.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return;
+            speechReply(speechJob.get());
         }
-        return false;
+        if (!nextSpeech) { KillTimer(window, speechTimer); return; }
+        auto request = std::move(*nextSpeech);
+        nextSpeech.reset();
+        const auto id = request.id;
+        try {
+            speechJob = std::async(std::launch::async, [this, request = std::move(request)] {
+                try { return SpeechResult{request.id, synthesize(request)}; }
+                catch (const std::exception&) { return SpeechResult{request.id, {}}; }
+            });
+        } catch (const std::exception&) { speechReply({id, {}}); }
     }
 
     void speechCommand(const std::wstring& command) {
         if (command == L"speech:stop") { stopNativeSpeech(); return; }
-        if (command == L"speech:pause" && nativeVoice && !nativePaused) {
-            nativePaused = SUCCEEDED(nativeVoice->Pause()); return;
-        }
-        if (command == L"speech:resume" && nativeVoice && nativePaused) {
-            nativeVoice->Resume(); nativePaused = false; return;
-        }
         if (command.rfind(L"speech:play:", 0) != 0 || command.size() > 2200) return;
-        const auto idEnd = command.find(L':', 12);
-        const auto rateEnd = idEnd == std::wstring::npos ? idEnd : command.find(L':', idEnd + 1);
-        const auto volumeEnd = rateEnd == std::wstring::npos ? rateEnd : command.find(L':', rateEnd + 1);
-        if (volumeEnd == std::wstring::npos) return;
+        size_t start = 12;
+        std::array<std::wstring, 4> fields;
+        for (auto& field : fields) {
+            const auto end = command.find(L':', start);
+            if (end == std::wstring::npos) return;
+            field = command.substr(start, end - start);
+            start = end + 1;
+        }
         try {
-            speechId = std::stoul(command.substr(12, idEnd - 12));
-            const int rate = std::stoi(command.substr(idEnd + 1, rateEnd - idEnd - 1));
-            const int volume = std::stoi(command.substr(rateEnd + 1, volumeEnd - rateEnd - 1));
-            stopNativeSpeech();
-            if (!startEnglishVoice()) { speechReply(false); return; }
-            nativeVoice->SetRate(rate < -5 ? -5 : rate > 5 ? 5 : rate);
-            speechGain = std::clamp(volume, 0, 150);
-            nativeVoice->SetVolume(static_cast<USHORT>(std::min(speechGain, 100)));
-            if (speechGain > 100 && !bufferSpeech()) {
-                nativeVoice->SetOutput(nullptr, TRUE);
-                speechBuffer.Reset();
-                speechStream.Reset();
-            }
-            if (FAILED(nativeVoice->Speak(command.c_str() + volumeEnd + 1, SPF_ASYNC | SPF_IS_NOT_XML, nullptr)) ||
-                !SetTimer(window, speechTimer, 40, nullptr)) {
-                stopNativeSpeech();
-                speechReply(false);
-            }
+            const auto id = std::stoul(fields[0]);
+            const auto rate = std::stof(fields[1]);
+            const auto volume = std::stoi(fields[2]);
+            const auto speaker = std::stoi(fields[3]);
+            if (!id || !std::isfinite(rate) || speaker < 0 || speaker >= 8 || start == command.size()) return;
+            const auto* text = command.data() + start;
+            const auto chars = static_cast<int>(command.size() - start);
+            const auto bytes = WideCharToMultiByte(CP_UTF8, 0, text, chars, nullptr, 0, nullptr, nullptr);
+            if (bytes <= 0) return;
+            std::string utf8(bytes, '\0');
+            if (!WideCharToMultiByte(CP_UTF8, 0, text, chars, utf8.data(), bytes, nullptr, nullptr)) return;
+            speechId = id;
+            if (!SetTimer(window, speechTimer, 40, nullptr)) { speechReply({speechId, {}}); return; }
+            nextSpeech = SpeechRequest{speechId, std::clamp(rate, 0.5f, 2.0f),
+                std::clamp(volume, 0, 150), speaker, std::move(utf8)};
+            pollSpeech();
         } catch (const std::exception&) { return; }
     }
 
@@ -467,10 +462,7 @@ LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case WM_TIMER:
         if (w == speechTimer) {
-            if (app->nativeVoice && !app->nativePaused) {
-                const auto status = app->nativeVoice->WaitUntilDone(0);
-                if (status != S_FALSE) app->speechReply(status == S_OK);
-            }
+            app->pollSpeech();
             return 0;
         }
         if (w == closeTimer) {
@@ -500,7 +492,7 @@ LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         GetClientRect(hwnd, &area);
         if (!app->view) {
             SetBkMode(dc, TRANSPARENT);
-            SetTextColor(dc, RGB(235, 225, 210));
+            SetTextColor(dc, RGB(234, 241, 255));
             DrawTextW(dc, L"正在打开词汇故事集…", -1, &area, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         }
         EndPaint(hwnd, &paint);
@@ -590,11 +582,12 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
         struct ComScope { ~ComScope() { CoUninitialize(); } } comScope;
         SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
         App app;
+        app.voicePack = folder / L"voice";
         app.port = choosePort();
         app.origin = L"http://127.0.0.1:" + std::to_wstring(app.port) + L"/";
         app.token = sessionToken();
         app.profile = data / L"WebView2";
-        app.frameBrush = CreateSolidBrush(RGB(41, 37, 31));
+        app.frameBrush = CreateSolidBrush(RGB(23, 39, 70));
         app.launch(folder, db);
 
         WNDCLASSW wc{};

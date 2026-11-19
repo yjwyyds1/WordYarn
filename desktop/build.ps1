@@ -2,6 +2,8 @@
 param(
     [Parameter(Mandatory)][string]$VcpkgRoot,
     [Parameter(Mandatory)][string]$WebView2Sdk,
+    [Parameter(Mandatory)][string]$SherpaSdk,
+    [Parameter(Mandatory)][string]$VoicePack,
     [string]$CMake = 'cmake',
     [string]$InstalledDir,
     [string]$MsvcRedistRoot = $env:VCToolsRedistDir
@@ -9,9 +11,11 @@ param(
 $ErrorActionPreference = 'Stop'
 $toolchain = Join-Path (Resolve-Path -LiteralPath $VcpkgRoot).Path 'scripts/buildsystems/vcpkg.cmake'
 $sdk = (Resolve-Path -LiteralPath $WebView2Sdk).Path
+$sherpa = (Resolve-Path -LiteralPath $SherpaSdk).Path
+$voice = (Resolve-Path -LiteralPath $VoicePack).Path
 $argsList = @('-S', $PSScriptRoot, '-B', (Join-Path $PSScriptRoot 'build-x64'),
     '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_TRY_COMPILE_CONFIGURATION=Release', "-DCMAKE_TOOLCHAIN_FILE=$toolchain",
-    "-DWEBVIEW2_SDK=$sdk", '-DVCPKG_TARGET_TRIPLET=x64-windows')
+    "-DWEBVIEW2_SDK=$sdk", "-DSHERPA_SDK=$sherpa", "-DKITTEN_VOICE_PACK=$voice", '-DVCPKG_TARGET_TRIPLET=x64-windows')
 if ($InstalledDir) {
     $installed = (Resolve-Path -LiteralPath $InstalledDir).Path
     $argsList += @('-DVCPKG_MANIFEST_MODE=OFF', "-DVCPKG_INSTALLED_DIR=$installed")

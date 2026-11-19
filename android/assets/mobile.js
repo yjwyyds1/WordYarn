@@ -5,7 +5,8 @@
   let sequence = 0, current = null, paused = false;
   const start = utterance => {
     current = { id: ++sequence, utterance };
-    AndroidSpeech.speak(String(current.id), utterance.text.slice(0, 1800), utterance.rate, utterance.volume);
+    const speaker = utterance.voice?.speaker ?? 0;
+    AndroidSpeech.speak(String(current.id), utterance.text.slice(0, 1800), utterance.rate, utterance.volume, speaker);
   };
   window.wordYarnSpeechEvent = (id, event, from, end) => {
     if (!current || id !== current.id) return;
@@ -16,8 +17,6 @@
   };
   window.wordYarnAndroid.synthesis = {
     get paused() { return paused; },
-    getVoices: () => [{ name: 'Kokoro · 内置离线音色', lang: 'en-US', voiceURI: 'wordyarn-kokoro', localService: true }],
-    addEventListener() {},
     speak(utterance) { paused = false; start(utterance); },
     pause() {
       if (!current || paused) return;
