@@ -1,10 +1,11 @@
 # WordYarn Windows 桌面版
 
-运行本地打包目录中的 `dist/WordYarn.exe`。请保留同目录的 `cet4.exe`、DLL 和 `site/`。首次启动前，建议先在网页版等到「已保存到 SQLite」，然后退出旧的学习服务。
+运行本地打包目录中的 `dist/WordYarn.exe`。请保留同目录的 `cet4.exe`、DLL、`site/` 和 `voice/`。首次启动前，建议先在网页版等到「已保存到 SQLite」，然后退出旧的学习服务。
 
 - 软件默认无边框全屏。双击标题栏、按 F11 或点右上角可切换窗口模式；关闭按钮会先提交待保存的记录。
 - 程序图标已内嵌。旧快捷方式仍显示旧图标时，重新创建快捷方式即可。
-- 朗读优先用 WebView2 提供的英语音色。找不到时，用 Windows 本地英语朗读兜底，并继续显示段落的句子进度。「朗读设置」的自动音色允许 0–150% 音量，默认请求 125%；超过 100% 会使用本地英语音色生成音频并限制峰值。也可打开 Windows 音量混合器查看应用音量。
+- 桌面版与安卓版共用 KittenTTS Micro 0.8 的 8 种离线英语音色，默认是 0 号男声。朗读会实时合成语音，并显示段落的句子进度。默认音量是 100%，使用 Kitten 时可调到 150%。
+- 在「朗读设置」选择 `Natasha · en-AU（Azure 联网）`，填写自己的 Azure Speech 区域和密钥，即可让桌面版调用 Natasha。朗读文本会发给 Azure，并计入该资源的额度。密钥只在这次打开应用时使用。
 
 - 桌面版具备独立窗口，由 Windows 原生 C++ 程序启动本机 Drogon 后端。程序使用已安装的 WebView2 Runtime，并随包提供 SQLite 库；无需启动 Edge 浏览器、PowerShell 或 WSL。文章、查询、复习和保存可离线使用。
 - 第一次启动检查仓库根目录的 `var/study.sqlite`，通过 SQLite 备份接口把已提交的记录（包括 WAL）导入 `%LOCALAPPDATA%\WordYarn\study.sqlite`。旧数据库留在原处。识别旧库依赖默认的 `desktop/dist/` 目录位置，请先从这个位置启动一次。
@@ -14,11 +15,16 @@
 
 ## 本地构建
 
-需要 MSVC x64 和 Windows SDK、CMake、Ninja、已初始化的 vcpkg，以及从官方 NuGet 获取并解包的 `Microsoft.Web.WebView2` SDK（此版使用 1.0.4314.35）。在 x64 Developer PowerShell 中从仓库根目录运行：
+需要 MSVC x64 和 Windows SDK、CMake、Ninja、已初始化的 vcpkg，以及从官方 NuGet 获取并解包的 `Microsoft.Web.WebView2` SDK（此版使用 1.0.4314.35）。另外解压以下两个包：
+
+- [sherpa-onnx 1.13.8](https://github.com/k2-fsa/sherpa-onnx/releases/tag/v1.13.8) 的 `win-x64-shared-MD-Release`，将含 `include/` 和 `lib/` 的目录传给 `-SherpaSdk`。
+- [KittenTTS Micro 0.8 模型包](https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kitten-micro-en-v0_8.tar.bz2)，将含 `model.onnx` 的目录传给 `-VoicePack`。
+
+在 x64 Developer PowerShell 中从仓库根目录运行：
 
 ```powershell
 npm --prefix web run build
-powershell -ExecutionPolicy Bypass -File desktop/build.ps1 -VcpkgRoot <vcpkg目录> -WebView2Sdk <SDK解包目录>
+powershell -ExecutionPolicy Bypass -File desktop/build.ps1 -VcpkgRoot "<vcpkg目录>" -WebView2Sdk "<WebView2 SDK目录>" -SherpaSdk "<sherpa-onnx SDK目录>" -VoicePack "<模型目录>"
 node --test desktop/tests/native.mjs
 ```
 

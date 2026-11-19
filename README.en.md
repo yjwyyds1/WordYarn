@@ -31,14 +31,14 @@ WordYarn turns China's CET-4 vocabulary syllabus into **30 connected short stori
 | **4,154 syllabus words** | Zero omissions, zero duplicates across the whole series. Every chapter carries 138–139 target words. |
 | **3,032 sentence translations** | Sentence-by-sentence English–Chinese alignment for all 30 chapters. |
 | **5,061 vocabulary examples** | An original example sentence, translation, and usage note for every word sense. |
-| **Web, Windows, and Android** | A static web reader, a Windows desktop app, and an offline Android app with bundled Kokoro speech. |
+| **Web, Windows, and Android** | A static web reader and Windows and Android apps with bundled KittenTTS speech. |
 
 ## Features
 
 ### Read · 精读
 
 - **Sentence-by-sentence alignment** — English on the left, Chinese on the right, one sentence per row.
-- **Target words underlined in vermilion**; click one for a card with phonetics, part of speech, meaning, the sentence you are reading, an extra example, and pronunciation.
+- **Target words are underlined in blue.** Select one for a card with phonetics, part of speech, meaning, the sentence you are reading, an extra example, and pronunciation.
 - **Text-to-speech** — read a sentence, or let a paragraph play with karaoke-style word highlighting.
 - **Continuous or aligned mode** — read a paragraph like a book, or expand it into two columns.
 
@@ -68,7 +68,7 @@ A small C++ service (Drogon + SQLite) adds a **Today** page that resumes your la
 
 Requires Android 8.0 or later. The APK bundles all 30 stories, translations, vocabulary lists, and flashcards. Reading position, vocabulary mastery, and review history stay on the phone.
 
-The bundled **Kokoro English voice** reads stories, words, examples, and custom English sentences offline. See the [Android installation and build guide](android/README.md) (Chinese).
+The bundled **KittenTTS English voices** read stories, words, examples, and custom English sentences offline. The default is the same speaker 0 as on Windows. See the [Android installation and build guide](android/README.md) (Chinese).
 
 ### 1. Static reader — no install, no network
 
@@ -157,13 +157,13 @@ The Windows and Android builds copy the current assets from `web/site/` when pac
 - [x] Local study server with spaced repetition and history
 - [x] Static web reader hosted on GitHub Pages
 - [x] Windows desktop app
-- [x] Offline Android app with bundled Kokoro speech
+- [x] Offline Android app with bundled KittenTTS speech
 - [ ] Cross-device progress sync
 - [ ] Additional exam word lists (CET-6, postgraduate, IELTS)
 
 ## Notes and limits
 
-- Web pronunciation depends on browser voices. The Windows app can use local Windows speech, and the Android app uses its bundled offline Kokoro engine.
+- Web pronunciation depends on browser voices. The Windows and Android apps bundle the same offline KittenTTS voices.
 - The static reader uses browser storage, the database-backed study mode uses SQLite, and Android keeps progress in the app. Progress does not sync automatically across devices.
 - The stories are original writing; the syllabus list follows a common published version of the CET-4 outline and may differ slightly from other editions.
 

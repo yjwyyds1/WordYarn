@@ -5,12 +5,13 @@
 - 30 篇文章和词表随包携带；精读默认显示连续正文，点段落标题切换到逐句对照。
 - 底栏可进入精读、查词、闪卡和统计。「今日」可以继续阅读、复习和查看近期答题记录。
 - 学习记录保存在这台手机。更新时使用相同的签名覆盖安装；清除应用数据或卸载会删除记录。首版没有账号或同步。
-- 内置 Kokoro 英语音色和 sherpa-onnx 引擎。文章、词汇、听写和自定义英文都在设备上实时生成语音，不调用系统朗读，也无需联网。首次朗读会加载模型，可能比后续稍慢。打开「朗读设置 → 试读英文」可试听自定义句子。
+- 内置 KittenTTS Micro 0.8 和 sherpa-onnx 引擎，与 Windows 版使用同一组 8 种英语音色，默认是 0 号男声。文章、词汇、听写和自定义英文都在设备上实时生成语音。首次朗读会加载模型，可能比后续稍慢。在「朗读设置」选择英语音色后可试听自定义句子。
+- 如需 Edge 网页里 Natasha 的声音，可在「朗读设置」选择 `Natasha · en-AU（Azure 联网）`，填自己的 Azure Speech 区域和密钥后试听。朗读文本会发给 Azure，使用该资源的额度。密钥只在这次打开应用时使用，重开后需重新填写。离线时可切回 Kitten。
 
 开发者准备 JDK 17 或更新版本、Android SDK Platform 35、Build Tools 35.0.1，以及：
 
 - [sherpa-onnx 1.13.8 静态 ONNX Runtime AAR](https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-static-link-onnxruntime-1.13.8.aar)
-- [Kokoro 英语 INT8 模型包](https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-en-v0_19.tar.bz2)，解压后把含 `model.int8.onnx` 的目录传给 `-VoicePack`。
+- [KittenTTS Micro 0.8 模型包](https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kitten-micro-en-v0_8.tar.bz2)，解压后把含 `model.onnx` 的目录传给 `-VoicePack`。
 - [Kotlin 标准库 2.2.21](https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.2.21/kotlin-stdlib-2.2.21.jar)
 - [D8 / R8 8.13.19](https://dl.google.com/dl/android/maven2/com/android/tools/r8/8.13.19/r8-8.13.19.jar)，用于编译 Kotlin 2.2 的库。
 
